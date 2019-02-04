@@ -23,4 +23,8 @@ Committing
 
 The project scaffold gets the version number for the module from git. To get the version number::
 
-    python setup.py --version
+    $ python setup.py --version
+
+Set the version with a tag::
+
+    $ git tag 0.0.1
