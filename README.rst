@@ -25,6 +25,9 @@ The project scaffold gets the version number for the module from git. To get the
 
     $ python setup.py --version
 
-Set the version with a tag::
+Set the version with a tag. The version numbers are specified with PEP440_ ::
 
     $ git tag 0.0.1
+
+
+.. _PEP440: http://www.python.org/dev/peps/pep-0440/
