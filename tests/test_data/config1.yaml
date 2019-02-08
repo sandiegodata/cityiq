@@ -1,0 +1,9 @@
+client_id: client1
+secret: secret1
+
+uaa_url: http://uaa1
+metadata_url: http://metadata1
+
+bbox: 1:2,3:4
+
+zone: zone1
