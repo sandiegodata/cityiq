@@ -38,6 +38,8 @@ def parse_args(args):
 
     parser.add_argument('-c', '--config', help='Path to configuration file')
 
+    parser.add_argument('-t', '--start-time', help='Starting time, in iso format. ')
+
     group = parser.add_mutually_exclusive_group()
 
     group.add_argument('-i', '--iterate', help='Iterate over stored events returning JSON lines', action='store_true')
@@ -75,6 +77,7 @@ def main(args):
     from cityiq import Config
     from cityiq.scrape import EventScraper
     from cityiq.scrape import logger as scrape_logger
+    from dateutil.parser import parse as parse_dt
 
     args = parse_args(args)
     setup_logging(args.loglevel)
@@ -89,10 +92,19 @@ def main(args):
 
     if not config.client_id:
         print("ERROR: Did not get valid config file. Use --config option or CITYIQ_CONFIG env var")
+        sys.exit(1)
+
+    start_time_str = args.start_time or config.start_time
+
+    if not start_time_str:
+        print("ERROR: Must specify a start time on the command line or in the config")
+        sys.exit(1)
 
     print("Using config:", config._config_file)
 
-    start_time = datetime.datetime(2019, 1, 1, 0, 0, tzinfo=tz)
+    start_time = parse_dt(start_time_str).replace(tzinfo=tz)
+
+    print(start_time)
 
     s = EventScraper(config, start_time, ['PKIN', 'PKOUT'])
 

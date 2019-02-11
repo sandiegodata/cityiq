@@ -7,6 +7,7 @@ import logging
 import threading
 import time
 
+import pytz
 import requests
 
 from .config import Config
@@ -160,6 +161,8 @@ class MicSensorAsset(Asset):
 class Location(CityIqObject):
     detail_url_suffix = '/v2/metadata/locations/{}'
     assets_url_suffix = '/v2/metadata/locations/{}/assets'
+    events_url_suffix = '/v2/locations/{locationUid}/events?eventType={eventType}&startTime={startts}&' \
+                        'endTime={endts}'
 
     row_header = 'locationUid locationType parentLocationUid  geometry'.split()
 
@@ -199,6 +202,18 @@ class Location(CityIqObject):
 
         for e in r.json()['assets']:
             yield Asset(self.client, e)
+
+    def events(self, eventType, start_time, end_time=None, span=None, ago=None):
+        start_time, end_time = se_time(self, start_time, end_time, ago, span)
+
+        url = self.client.config.metadata_url + self.format(
+            locationUid=self.locationUid, eventType=eventType,
+            startts=start_time.timestamp() * 1000, endts=end_time.timestamp() * 100
+        )
+
+        r = self.client.http_get(url)
+
+        return r.json()
 
     @property
     def row(self):
@@ -284,6 +299,59 @@ class EventWorker(threading.Thread):
             self.queue.put(None)
 
 
+def current_time():
+    '''Return the epoch time in miliseconds'''
+    return int(round(time.time() * 1000, 0))
+
+
+def time_ago(days=None, hours=None, minutes=None, seconds=None):
+    t = time.time()
+
+    if seconds:
+        t -= seconds
+
+    if minutes:
+        t -= minutes * 60
+
+    if hours:
+        t -= hours * 60 * 60
+
+    if days:
+        t -= days * 60 * 60 * 26
+
+    return int(round(t * 1000, 0))
+
+
+def se_time(self, start_time=None, end_time=None, ago=None, span=None):
+    if ago and span:
+        raise CityIqError("Specify either age or span, but not both")
+
+    if ago and not end_time:
+        raise CityIqError("If age is specified, end_time must be also")
+
+    if span and not start_time:
+        raise CityIqError("If span is specified, start_time must be also")
+
+    if not end_time:
+        if start_time and span:
+            end_time = (start_time + span) * 1000
+        else:
+            end_time = current_time()
+    else:
+        end_time = int(end_time * 1000)
+
+    if not start_time:
+        if ago:
+            start_time = end_time - (ago * 1000)
+
+        else:
+            start_time = time_ago(minutes=15)
+    else:
+        start_time = int(start_time * 1000)
+
+    return int(start_time), int(end_time)
+
+
 class CityIq(object):
     assets_search_suffix = '/v2/metadata/assets/search'
     locations_search_suffix = '/v2/metadata/locations/search'
@@ -300,28 +368,7 @@ class CityIq(object):
 
         self._token = None
 
-    @property
-    def current_time(self):
-        '''Return the epoch time in miliseconds'''
-        return int(round(time.time() * 1000, 0))
-
-    def time_ago(self, days=None, hours=None, minutes=None, seconds=None):
-
-        t = time.time()
-
-        if seconds:
-            t -= seconds
-
-        if minutes:
-            t -= minutes * 60
-
-        if hours:
-            t -= hours * 60 * 60
-
-        if days:
-            t -= days * 60 * 60 * 26
-
-        return int(round(t * 1000, 0))
+        self.tz = pytz.timezone(self.config.timezone)
 
     @property
     def token(self):
@@ -478,36 +525,6 @@ class CityIq(object):
     def parking_zones(self):
         return self.get_locations('PARKING_ZONE')
 
-    def _se_time(self, start_time=None, end_time=None, age=None, span=None):
-
-        if age and span:
-            raise CityIqError("Specify either age or span, but not both")
-
-        if age and not end_time:
-            raise CityIqError("If age is specified, end_time must be also")
-
-        if span and not start_time:
-            raise CityIqError("If span is specified, start_time must be also")
-
-        if not end_time:
-            if start_time and span:
-                end_time = (start_time + span) * 1000
-            else:
-                end_time = self.current_time
-        else:
-            end_time = int(end_time * 1000)
-
-        if not start_time:
-            if age:
-                start_time = end_time - (age * 1000)
-
-            else:
-                start_time = self.time_ago(minutes=15)
-        else:
-            start_time = int(start_time * 1000)
-
-        return int(start_time), int(end_time)
-
     def _event_params(self, start_time, end_time, event_type, bbox=None):
 
         bbox = bbox or self.config.bbox
@@ -552,7 +569,7 @@ class CityIq(object):
         :return:
         """
 
-        start_time, end_time = self._se_time(start_time, end_time, age, span)
+        start_time, end_time = se_time(start_time, end_time, age, span)
 
         logger.debug("Starting events start_time={} end_time={}, event_type={}".format(
             datetime.datetime.utcfromtimestamp(start_time / 1000),

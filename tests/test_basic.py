@@ -79,6 +79,18 @@ class TestBasic(CityIQTest):
             for a in l.assets:
                 print('   ', a)
 
+    def test_location_events(self):
+        from datetime import datetime
+
+        c = CityIq(Config(config_file, cache_dir='/tmp'))
+
+        locations = list(c.locations)
+
+        start = c.tz.localize(datetime(2019, 2, 1, 11, 0, 0))
+        end = c.tz.localize(datetime(2019, 2, 1, 14, 0, 0))
+
+        print(locations[100].events('PKIN', start, end))
+
     def test_nodes(self):
 
         c = CityIq(Config(config_file, cache_dir='/tmp'))
