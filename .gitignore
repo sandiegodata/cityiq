@@ -45,5 +45,15 @@ docs/_build/*
 cover/*
 MANIFEST
 
+
+docs/doctrees/
+
+sphinx/_static/
+
+.DS_Store
+
 # Per-project virtualenvs
 .venv*/
+
+notebooks/.DS_Store
+notebooks/old/
