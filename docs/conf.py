@@ -8,9 +8,10 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import os
 import sys
+
 import inspect
+import os
 import shutil
 
 __location__ = os.path.join(os.getcwd(), os.path.dirname(
@@ -218,25 +219,24 @@ html_static_path = ['_static']
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'cityiq-doc'
 
-
 # -- Options for LaTeX output --------------------------------------------------
 
 latex_elements = {
-# The paper size ('letterpaper' or 'a4paper').
-# 'papersize': 'letterpaper',
+    # The paper size ('letterpaper' or 'a4paper').
+    # 'papersize': 'letterpaper',
 
-# The font size ('10pt', '11pt' or '12pt').
-# 'pointsize': '10pt',
+    # The font size ('10pt', '11pt' or '12pt').
+    # 'pointsize': '10pt',
 
-# Additional stuff for the LaTeX preamble.
-# 'preamble': '',
+    # Additional stuff for the LaTeX preamble.
+    # 'preamble': '',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'user_guide.tex', u'cityiq Documentation',
-   u'Eric Busboom', 'manual'),
+    ('index', 'user_guide.tex', u'cityiq Documentation',
+     u'Eric Busboom', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

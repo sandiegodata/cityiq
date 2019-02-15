@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Scrape and store events from the API
+
+
+
 """
 
 import asyncio

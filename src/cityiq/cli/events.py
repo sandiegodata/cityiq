@@ -1,6 +1,38 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
+""" The ciq_events program is used to scrape and process events. To properly
+run the program, two directories should be specified in the configuration:
+
+- ``events_cache``: The directory where hourly event fiels will be specified
+- ``cache_dir``: The directory where processed event files will be written.
+
+To scrape events from the API, run :option:`ciq_events --scrape --start_time
+<isotime>`. If ``<isotime>`` is omitted, the program will start from the
+``start_time`` specified in the config. This will download events from the
+start time in hourly batches, and save one file per hour.
+
+To process events, first break up the hourly event files by location with
+:option:`ciq_events --split` command. This will create one CSV file per
+location per month. Then, re-combine and renormalize the data with
+:option:`ciq_events --normalize`, which will write a CSV file to the local directory.
+
+The final output file will have columns for `delta`, which is the number of
+cars that went into or out of a parking zone per 15 minute interval. However,
+there are a lot of suprious events, so the `delta_norm` has a normalized value
+that tries to remove the spurious events.
+
+These programs can produce a lot of data. For the San Diego system, the
+extracted PKIN and PKOUT events for September 2018 through Feb 2019 is 21GB,
+and the download process takes several days. The final processed CSV file, with
+records at 15 minute intervals, is about 81MB and akes about an hour to process.
+
+For instance:
+
+.. code-block:: bash
+
+    $ ciq_events -s -e PKIN -e PKOUT -t 20190901
+    $ ciq_events -S
+    $ ciq_events -n
 
 """
 

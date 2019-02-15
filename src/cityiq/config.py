@@ -1,4 +1,32 @@
 """
+The CityIq module and programs require a configuration file that hold credentials and urls. You can generate a default
+configuration with ::
+
+    ciq_config  -w
+
+The generated file is configured for the San Diego system. To you this system , you will just need to add your
+client id and secret to the file.
+
+The  :py:class:`Config` object can be constructed can constructed on a path where the config file is location. If none
+is specified it will look for this file in several places, in this order:
+
+- The path specified in the constructor
+- The path specified by the ``CITYIQ_CONFIG`` env var
+- ``.city-iq.yaml`` in the current dir
+- ``city-iq.yaml`` in the current dir
+- ``.city-iq.yaml`` in the user's home dir
+
+Each of the configuration files can be overridden with a keywork in the ``Config`` object constructor, and each value
+can be accessed as an attribute or an index:
+
+
+.. code-block:: python
+
+    # Load from well-known file and override cache_dir
+    c = Config(cache_dir='/tmp')
+
+    print(c.cache_dir)
+    print(c['cache_dir'])
 
 """
 
@@ -59,6 +87,17 @@ class Config(object):
 
         return {}
 
+    @property
+    def dict(self):
+
+        d = {k: self[k] for k in self.parameters}
+
+        for k, v in self._config.items():
+            if k not in d:
+                d[k] = v
+
+        return d
+
     def __getattr__(self, item):
 
         try:
@@ -80,3 +119,9 @@ class Config(object):
             raise AttributeError(item)
 
         return None
+
+    def __getitem__(self, item):
+        try:
+            return self.__getattr__(item)
+        except AttributeError:
+            raise IndexError(item)

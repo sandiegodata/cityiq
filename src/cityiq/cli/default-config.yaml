@@ -1,0 +1,36 @@
+# Access Credentials
+client_id: <client_id>
+secret: <client_secret>
+
+# Whole city of San Diego, about 26K assets
+# bbox: 32.97921188:-117.2786615,32.5796274808836:-117.000454314392
+
+# Downtown San Diego
+#bbox: 32.718987:-117.174244,32.707356:-117.154850
+
+# Test value
+bbox: 33.077762:-117.663817,32.559574:-116.584410
+
+# San Diego Zones
+default_zone: SD-IE-TRAFFIC
+traffic_zone: SD-IE-TRAFFIC
+parking_zone: SD-IE-PARKING
+pedestrian_zone: SD-IE-PEDESTRIAN
+environmental_zone: SD-IE-ENVIRONMENTAL
+video_zone: SD-IE-VIDEO
+image_zone: SD-IE-IMAGE
+
+# Urls
+uaa_url: https://624eff02-dbb1-4c6c-90bc-fa85a29e5fa8.predix-uaa.run.aws-usw02-pr.ice.predix.io
+metadata_url: https://ic-metadata-service-sandiego.run.aws-usw02-pr.ice.predix.io
+media_url: https://ic-media-service-sandiego.run.aws-usw02-pr.ice.predix.io
+event_url: https://ic-event-service-sandiego.run.aws-usw02-pr.ice.predix.io
+websocket_url : wss://ic-websocket-service-sandiego.run.aws-usw02-pr.ice.predix.io
+
+# Start time for scraping and processing
+start_time: 20180901T00:00:00
+timezone: US/Pacific
+
+# Caches for storing events and processed events
+events_cache: /tmp
+cache_dir: /tmp
