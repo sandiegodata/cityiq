@@ -1,0 +1,7 @@
+cityiq
+======
+
+.. toctree::
+   :maxdepth: 4
+
+   cityiq

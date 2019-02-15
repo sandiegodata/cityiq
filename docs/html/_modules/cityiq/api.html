@@ -1,0 +1,785 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>cityiq.api &#8212; cityiq 0.0.4 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+
+  <h1>Source code for cityiq.api</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">API objects are the primary way to get access to assets and events. :py:class:`CityIq` is the top level access</span>
+<span class="sd">object. The API offers access to Locations, Events and Events.</span>
+
+<span class="sd">Typically, you will construct :py:class:`CityIq` from a :py:class:`Config`. If a configuration is not specific,</span>
+<span class="sd">the system will look for the file in default locations. You can also override individual configuration parameters</span>
+<span class="sd">with keyword arguments to the constructor.</span>
+
+<span class="sd">Metadata Access</span>
+<span class="sd">---------------</span>
+
+<span class="sd">Metadata, for both locations and assets, can be fetched with property accessors. The bounding box for the queries can</span>
+<span class="sd">be set in the configuration, or on the  :py:class:`CityIq` constructor.</span>
+
+<span class="sd">The asset metadata properties are:</span>
+
+<span class="sd">- :py:attr:`CityIq.assets` : All assets</span>
+<span class="sd">- :py:attr:`CityIq.nodes` : Nodes, the parents for other assets on a pole</span>
+<span class="sd">- :py:attr:`CityIq.cameras` : All assets</span>
+<span class="sd">- :py:attr:`CityIq.em_sensors` : ?</span>
+<span class="sd">- :py:attr:`CityIq.env_sensors` : Environmental sensors</span>
+
+<span class="sd">The location metadata properties are:</span>
+
+<span class="sd">- :py:attr:`CityIq.locations` : All locations</span>
+<span class="sd">- :py:attr:`CityIq.walkways` :</span>
+<span class="sd">- :py:attr:`CityIq.parking_zones` :</span>
+<span class="sd">- :py:attr:`CityIq.traffic_lane` :</span>
+
+<span class="sd">Events can be fetched with :py:func:`cityiq.api.CityIq.events`</span>
+
+<span class="sd">Each of these acessor properties or functions returns a generator that generates objects of a specific type,</span>
+<span class="sd">one base class for each of Locations, Assets or Events:</span>
+
+<span class="sd">- :py:class:`Asset`</span>
+<span class="sd">- :py:class:`Location`</span>
+<span class="sd">- :py:class:`Event`</span>
+
+<span class="sd">.. code-block:: python</span>
+
+<span class="sd">    bbox = &#39;32.718987:-117.174244,32.707356:-117.154850&#39;</span>
+
+<span class="sd">    c = CityIq(bbox=bbox) # Use default config, override bbox</span>
+
+<span class="sd">    # Get Locations</span>
+<span class="sd">    locations = list(c.locations)</span>
+
+<span class="sd">    # Get the assets at this location:</span>
+<span class="sd">    for location in locations:</span>
+<span class="sd">        do_something_with(location.assets</span>
+
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="kn">import</span> <span class="nn">pytz</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+
+<span class="kn">from</span> <span class="nn">.config</span> <span class="k">import</span> <span class="n">Config</span>
+<span class="kn">from</span> <span class="nn">.exceptions</span> <span class="k">import</span> <span class="n">CityIqError</span><span class="p">,</span> <span class="n">ConfigurationError</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="CityIqObject"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CityIqObject">[docs]</a><span class="k">class</span> <span class="nc">CityIqObject</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">client</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+
+    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">geometry</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a Shapely polygon for the coordinates&quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="k">import</span> <span class="n">Point</span><span class="p">,</span> <span class="n">Polygon</span><span class="p">,</span> <span class="n">LineString</span>
+
+        <span class="k">def</span> <span class="nf">numify</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
+            <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;coordinatesType&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">coordinatesType</span> <span class="o">==</span> <span class="s1">&#39;GEO&#39;</span><span class="p">:</span>
+
+            <span class="n">vertices</span> <span class="o">=</span> <span class="p">[</span><span class="n">numify</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">coordinates</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)]</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">vertices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">Point</span><span class="p">(</span><span class="n">vertices</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">vertices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">LineString</span><span class="p">(</span><span class="n">vertices</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">Polygon</span><span class="p">(</span><span class="n">vertices</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;&lt;</span><span class="si">{}</span><span class="s2">: </span><span class="si">{}</span><span class="s2">&gt;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Asset"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.Asset">[docs]</a><span class="k">class</span> <span class="nc">Asset</span><span class="p">(</span><span class="n">CityIqObject</span><span class="p">):</span>
+    <span class="n">detail_url_suffix</span> <span class="o">=</span> <span class="s1">&#39;/v2/metadata/assets/</span><span class="si">{}</span><span class="s1">&#39;</span>
+    <span class="n">locations_url_suffix</span> <span class="o">=</span> <span class="s1">&#39;/v2/metadata/assets/</span><span class="si">{}</span><span class="s1">/locations&#39;</span>
+    <span class="n">children_url_suffix</span> <span class="o">=</span> <span class="s1">&#39;/v2/metadata/assets/</span><span class="si">{}</span><span class="s1">/subAssets&#39;</span>
+
+    <span class="n">row_header</span> <span class="o">=</span> <span class="s1">&#39;assetUid assetType parentAssetUid mediaType events geometry&#39;</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+
+    <span class="c1"># observed values for the assetType field</span>
+    <span class="n">types</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;NODE&#39;</span><span class="p">,</span> <span class="s1">&#39;EM_SENSOR&#39;</span><span class="p">,</span> <span class="s1">&#39;MIC&#39;</span><span class="p">,</span> <span class="s1">&#39;ENV_SENSOR&#39;</span><span class="p">,</span> <span class="s1">&#39;CAMERA&#39;</span><span class="p">]</span>
+
+    <span class="c1"># Map asset types to subclasses</span>
+    <span class="n">dclass_map</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;NODE&#39;</span><span class="p">:</span> <span class="s1">&#39;NodeAsset&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;CAMERA&#39;</span><span class="p">:</span> <span class="s1">&#39;CameraAsset&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;EM_SENSOR&#39;</span><span class="p">:</span> <span class="s1">&#39;EmSensorAsset&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;XENV_SENSOR&#39;</span><span class="p">:</span> <span class="s1">&#39;EnvSensorAsset&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;MIC&#39;</span><span class="p">:</span> <span class="s1">&#39;MicSensorAsset&#39;</span>
+                  <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="n">dclass_name</span> <span class="o">=</span> <span class="n">Asset</span><span class="o">.</span><span class="n">dclass_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;assetType&#39;</span><span class="p">],</span> <span class="n">Asset</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>  <span class="c1"># probably fragile</span>
+
+        <span class="n">dclass</span> <span class="o">=</span> <span class="nb">globals</span><span class="p">()[</span><span class="n">dclass_name</span><span class="p">]</span>
+
+        <span class="n">obj</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">CityIqObject</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="n">dclass</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">obj</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">lat</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">coordinates</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">lon</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">coordinates</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">detail</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Asset details&quot;&quot;&quot;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">metadata_url</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">detail_url_suffix</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">assetUid</span><span class="p">)</span>
+
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">http_get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Asset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">parent</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">metadata_url</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">detail_url_suffix</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parentAssetUid</span><span class="p">)</span>
+
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">http_get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Asset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">locations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Assets at this location&quot;&quot;&quot;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">metadata_url</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">locations_url_suffix</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">assetUid</span><span class="p">)</span>
+
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">http_get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;locations&#39;</span><span class="p">]:</span>
+            <span class="k">yield</span> <span class="n">Location</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">children</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sub assets of this asset&quot;&quot;&quot;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">metadata_url</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">children_url_suffix</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">assetUid</span><span class="p">)</span>
+
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">http_get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;assets&#39;</span><span class="p">]:</span>
+            <span class="k">yield</span> <span class="n">Asset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">row</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return most important fields in a row format&quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">operator</span> <span class="k">import</span> <span class="n">attrgetter</span>
+
+        <span class="k">def</span> <span class="nf">evt_list</span><span class="p">(</span><span class="n">events</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">events</span> <span class="ow">or</span> <span class="p">[])))</span>
+
+        <span class="n">ag</span> <span class="o">=</span> <span class="n">attrgetter</span><span class="p">(</span><span class="o">*</span><span class="n">Asset</span><span class="o">.</span><span class="n">row_header</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">ag</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">evt_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eventTypes</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">geometry</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="NodeAsset"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.NodeAsset">[docs]</a><span class="k">class</span> <span class="nc">NodeAsset</span><span class="p">(</span><span class="n">Asset</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="CameraAsset"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CameraAsset">[docs]</a><span class="k">class</span> <span class="nc">CameraAsset</span><span class="p">(</span><span class="n">Asset</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="EnvSensorAsset"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.EnvSensorAsset">[docs]</a><span class="k">class</span> <span class="nc">EnvSensorAsset</span><span class="p">(</span><span class="n">Asset</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="EmSensorAsset"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.EmSensorAsset">[docs]</a><span class="k">class</span> <span class="nc">EmSensorAsset</span><span class="p">(</span><span class="n">Asset</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="MicSensorAsset"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.MicSensorAsset">[docs]</a><span class="k">class</span> <span class="nc">MicSensorAsset</span><span class="p">(</span><span class="n">Asset</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="Location"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.Location">[docs]</a><span class="k">class</span> <span class="nc">Location</span><span class="p">(</span><span class="n">CityIqObject</span><span class="p">):</span>
+    <span class="n">detail_url_suffix</span> <span class="o">=</span> <span class="s1">&#39;/v2/metadata/locations/</span><span class="si">{}</span><span class="s1">&#39;</span>
+    <span class="n">assets_url_suffix</span> <span class="o">=</span> <span class="s1">&#39;/v2/metadata/locations/</span><span class="si">{}</span><span class="s1">/assets&#39;</span>
+    <span class="n">events_url_suffix</span> <span class="o">=</span> <span class="s1">&#39;/v2/locations/</span><span class="si">{locationUid}</span><span class="s1">/events?eventType=</span><span class="si">{eventType}</span><span class="s1">&amp;startTime=</span><span class="si">{startts}</span><span class="s1">&amp;&#39;</span> \
+                        <span class="s1">&#39;endTime=</span><span class="si">{endts}</span><span class="s1">&#39;</span>
+
+    <span class="n">row_header</span> <span class="o">=</span> <span class="s1">&#39;locationUid locationType parentLocationUid  geometry&#39;</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+
+    <span class="c1"># observed values for the assetType field</span>
+    <span class="n">types</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;WALKWAY&#39;</span><span class="p">,</span> <span class="s1">&#39;TRAFFIC_LANE&#39;</span><span class="p">,</span> <span class="s1">&#39;PARKING_ZONE&#39;</span><span class="p">]</span>
+
+    <span class="c1"># Map asset types to subclasses</span>
+    <span class="n">dclass_map</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;WALKWAY&#39;</span><span class="p">:</span> <span class="s1">&#39;WalkwayLocation&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;TRAFFIC_LANE&#39;</span><span class="p">:</span> <span class="s1">&#39;TrafficLaneLocation&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;PARKING_ZONE&#39;</span><span class="p">:</span> <span class="s1">&#39;ParkingZoneLocation&#39;</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">dclass_name</span> <span class="o">=</span> <span class="n">Location</span><span class="o">.</span><span class="n">dclass_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;locationType&#39;</span><span class="p">],</span> <span class="n">Location</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>  <span class="c1"># probably fragile</span>
+
+        <span class="n">dclass</span> <span class="o">=</span> <span class="nb">globals</span><span class="p">()[</span><span class="n">dclass_name</span><span class="p">]</span>
+
+        <span class="n">obj</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">CityIqObject</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="n">dclass</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">obj</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">detail</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">metadata_url</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">detail_url_suffix</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">locationUid</span><span class="p">)</span>
+
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">http_get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">assets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Assets at this location&quot;&quot;&quot;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">metadata_url</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">assets_url_suffix</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">locationUid</span><span class="p">)</span>
+
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">http_get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;assets&#39;</span><span class="p">]:</span>
+            <span class="k">yield</span> <span class="n">Asset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Location.events"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.Location.events">[docs]</a>    <span class="k">def</span> <span class="nf">events</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eventType</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">span</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ago</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span> <span class="o">=</span> <span class="n">se_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">ago</span><span class="p">,</span> <span class="n">span</span><span class="p">)</span>
+
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">metadata_url</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">locationUid</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">locationUid</span><span class="p">,</span> <span class="n">eventType</span><span class="o">=</span><span class="n">eventType</span><span class="p">,</span>
+            <span class="n">startts</span><span class="o">=</span><span class="n">start_time</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">endts</span><span class="o">=</span><span class="n">end_time</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span> <span class="o">*</span> <span class="mi">100</span>
+        <span class="p">)</span>
+
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">http_get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">row</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return most important fields in a row format&quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">operator</span> <span class="k">import</span> <span class="n">attrgetter</span>
+
+        <span class="n">ag</span> <span class="o">=</span> <span class="n">attrgetter</span><span class="p">(</span><span class="o">*</span><span class="n">Location</span><span class="o">.</span><span class="n">row_header</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">ag</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">geometry</span><span class="p">,)</span></div>
+
+
+<div class="viewcode-block" id="WalkwayLocation"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.WalkwayLocation">[docs]</a><span class="k">class</span> <span class="nc">WalkwayLocation</span><span class="p">(</span><span class="n">Location</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="TrafficLaneLocation"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.TrafficLaneLocation">[docs]</a><span class="k">class</span> <span class="nc">TrafficLaneLocation</span><span class="p">(</span><span class="n">Location</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="ParkingZoneLocation"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.ParkingZoneLocation">[docs]</a><span class="k">class</span> <span class="nc">ParkingZoneLocation</span><span class="p">(</span><span class="n">Location</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="Event"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.Event">[docs]</a><span class="k">class</span> <span class="nc">Event</span><span class="p">(</span><span class="n">CityIqObject</span><span class="p">):</span>
+    <span class="n">types</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;PKIN&#39;</span><span class="p">,</span> <span class="s1">&#39;PKOUT&#39;</span><span class="p">,</span> <span class="s1">&#39;PEDEVT&#39;</span><span class="p">,</span> <span class="s1">&#39;TFEVT&#39;</span><span class="p">,</span> <span class="s1">&#39;TEMPERATURE&#39;</span><span class="p">,</span> <span class="s1">&#39;PRESSURE&#39;</span><span class="p">,</span> <span class="s1">&#39;ORIENTATION&#39;</span><span class="p">,</span> <span class="s1">&#39;METROLOGY&#39;</span><span class="p">,</span> <span class="s1">&#39;HUMIDITY&#39;</span><span class="p">,</span>
+             <span class="s1">&#39;ENERGY_TIMESERIES&#39;</span><span class="p">,</span> <span class="s1">&#39;ENERGY_ALERT&#39;</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="EventWorker"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.EventWorker">[docs]</a><span class="k">class</span> <span class="nc">EventWorker</span><span class="p">(</span><span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Thread worker for websociet events&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">queue</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">client</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events</span> <span class="o">=</span> <span class="n">events</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">queue</span> <span class="o">=</span> <span class="n">queue</span>
+
+<div class="viewcode-block" id="EventWorker.run"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.EventWorker.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+        <span class="kn">import</span> <span class="nn">websocket</span>
+        <span class="kn">import</span> <span class="nn">json</span>
+
+        <span class="c1"># websocket.enableTrace(True)</span>
+
+        <span class="c1"># events = [&quot;TFEVT&quot;]</span>
+
+        <span class="k">if</span> <span class="s1">&#39;TFEVT&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">:</span>
+            <span class="n">zone</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">traffic_zone</span><span class="p">,</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">zone</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">parking_zone</span>
+
+        <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;Authorization&#39;</span><span class="p">:</span> <span class="s1">&#39;Bearer &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">token</span><span class="p">,</span>
+            <span class="s1">&#39;Predix-Zone-Id&#39;</span><span class="p">:</span> <span class="n">zone</span><span class="p">,</span>
+            <span class="s1">&#39;Cache-Control&#39;</span><span class="p">:</span> <span class="s1">&#39;no-cache&#39;</span>
+        <span class="p">}</span>
+
+        <span class="k">def</span> <span class="nf">on_message</span><span class="p">(</span><span class="n">ws</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">on_close</span><span class="p">(</span><span class="n">ws</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">on_open</span><span class="p">(</span><span class="n">ws</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;bbox&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span>
+                <span class="s1">&#39;eventTypes&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span>
+            <span class="p">}</span>
+
+            <span class="n">ws</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">msg</span><span class="p">))</span>
+
+        <span class="n">ws</span> <span class="o">=</span> <span class="n">websocket</span><span class="o">.</span><span class="n">WebSocketApp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">websocket_url</span> <span class="o">+</span> <span class="s1">&#39;/events&#39;</span><span class="p">,</span>
+                                    <span class="n">header</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span>
+                                    <span class="n">on_message</span><span class="o">=</span><span class="n">on_message</span><span class="p">,</span>
+                                    <span class="n">on_close</span><span class="o">=</span><span class="n">on_close</span><span class="p">)</span>
+        <span class="n">ws</span><span class="o">.</span><span class="n">on_open</span> <span class="o">=</span> <span class="n">on_open</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">ws</span><span class="o">.</span><span class="n">run_forever</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="current_time"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.current_time">[docs]</a><span class="k">def</span> <span class="nf">current_time</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;Return the epoch time in miliseconds&#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="time_ago"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.time_ago">[docs]</a><span class="k">def</span> <span class="nf">time_ago</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">hours</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">minutes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">seconds</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">seconds</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">-=</span> <span class="n">seconds</span>
+
+    <span class="k">if</span> <span class="n">minutes</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">-=</span> <span class="n">minutes</span> <span class="o">*</span> <span class="mi">60</span>
+
+    <span class="k">if</span> <span class="n">hours</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">-=</span> <span class="n">hours</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">60</span>
+
+    <span class="k">if</span> <span class="n">days</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">-=</span> <span class="n">days</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">26</span>
+
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">t</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="se_time"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.se_time">[docs]</a><span class="k">def</span> <span class="nf">se_time</span><span class="p">(</span><span class="n">start_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">end_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ago</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">span</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">ago</span> <span class="ow">and</span> <span class="n">span</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">CityIqError</span><span class="p">(</span><span class="s2">&quot;Specify either age or span, but not both&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">ago</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">end_time</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">CityIqError</span><span class="p">(</span><span class="s2">&quot;If age is specified, end_time must be also&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">span</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">start_time</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">CityIqError</span><span class="p">(</span><span class="s2">&quot;If span is specified, start_time must be also&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">end_time</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">start_time</span> <span class="ow">and</span> <span class="n">span</span><span class="p">:</span>
+            <span class="n">end_time</span> <span class="o">=</span> <span class="p">(</span><span class="n">start_time</span> <span class="o">+</span> <span class="n">span</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">end_time</span> <span class="o">=</span> <span class="n">current_time</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">end_time</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">end_time</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">start_time</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">ago</span><span class="p">:</span>
+            <span class="n">start_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="p">(</span><span class="n">ago</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">start_time</span> <span class="o">=</span> <span class="n">time_ago</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">start_time</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">start_time</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">end_time</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CityIq"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CityIq">[docs]</a><span class="k">class</span> <span class="nc">CityIq</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="n">assets_search_suffix</span> <span class="o">=</span> <span class="s1">&#39;/v2/metadata/assets/search&#39;</span>
+    <span class="n">locations_search_suffix</span> <span class="o">=</span> <span class="s1">&#39;/v2/metadata/locations/search&#39;</span>
+
+    <span class="n">events_url</span> <span class="o">=</span> <span class="s1">&#39;/v2/locations/events?bbox=</span><span class="si">{bbox}</span><span class="s1">&amp;locationType=</span><span class="si">{location_type}</span><span class="s1">&amp;eventType=</span><span class="si">{event_type}</span><span class="s1">&amp;startTime={&#39;</span> \
+                 <span class="s1">&#39;start_time}&amp;endTime=</span><span class="si">{end_time}</span><span class="s1">&amp;pageSize=100&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="n">config</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">Config</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_token</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">tz</span> <span class="o">=</span> <span class="n">pytz</span><span class="o">.</span><span class="n">timezone</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">timezone</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">token</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="kn">from</span> <span class="nn">.token</span> <span class="k">import</span> <span class="n">get_cached_token</span><span class="p">,</span> <span class="n">get_token</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_token</span><span class="p">:</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cache_dir</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_token</span> <span class="o">=</span> <span class="n">get_cached_token</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cache_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">uaa_url</span><span class="p">,</span>
+                                               <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">client_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">secret</span><span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_token</span> <span class="o">=</span> <span class="n">get_token</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">uaa_url</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">client_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">secret</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_token</span>
+
+<div class="viewcode-block" id="CityIq.http_get"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CityIq.http_get">[docs]</a>    <span class="k">def</span> <span class="nf">http_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">zone</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="n">zone</span> <span class="o">=</span> <span class="n">zone</span> <span class="k">if</span> <span class="n">zone</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">default_zone</span>
+
+        <span class="k">if</span> <span class="n">params</span><span class="p">:</span>
+            <span class="c1"># Not using the requests param argument b/c it will urlencode, and these query</span>
+            <span class="c1"># parameters can&#39;t be url encoded.</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="n">url</span> <span class="o">+</span> <span class="s1">&#39;?&#39;</span> <span class="o">+</span> <span class="s2">&quot;&amp;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+
+        <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;Authorization&#39;</span><span class="p">:</span> <span class="s1">&#39;Bearer &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">token</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">zone</span><span class="p">:</span>
+            <span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Predix-Zone-Id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">zone</span>
+
+        <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="n">r</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">r</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_page</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">page</span><span class="p">,</span> <span class="n">zone</span><span class="p">,</span> <span class="n">bbox</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;page&#39;</span><span class="p">:</span> <span class="n">page</span><span class="p">,</span>
+            <span class="s1">&#39;size&#39;</span><span class="p">:</span> <span class="mi">5000</span><span class="p">,</span>
+            <span class="s1">&#39;bbox&#39;</span><span class="p">:</span> <span class="n">bbox</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">query</span><span class="p">:</span>
+            <span class="n">params</span><span class="p">[</span><span class="s1">&#39;q&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">query</span><span class="p">)</span>
+
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">http_get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">zone</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+
+<div class="viewcode-block" id="CityIq.get_pages"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CityIq.get_pages">[docs]</a>    <span class="k">def</span> <span class="nf">get_pages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">zone</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+        <span class="n">zone</span> <span class="o">=</span> <span class="n">zone</span> <span class="k">if</span> <span class="n">zone</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">zone</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">zone</span><span class="p">:</span>
+            <span class="n">ConfigurationError</span><span class="p">(</span><span class="s2">&quot;Must specify a zone, either in the get_assets call, or in the config&quot;</span><span class="p">)</span>
+
+        <span class="n">bbox</span> <span class="o">=</span> <span class="n">bbox</span> <span class="k">if</span> <span class="n">bbox</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">bbox</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">zone</span><span class="p">:</span>
+            <span class="n">ConfigurationError</span><span class="p">(</span><span class="s2">&quot;Must specify a bounding box (bbox) , either in the get_assets call, or in the config&quot;</span><span class="p">)</span>
+
+        <span class="n">page</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_page</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">page</span><span class="p">,</span> <span class="n">zone</span><span class="p">,</span> <span class="n">bbox</span><span class="p">,</span> <span class="n">query</span><span class="p">)</span>
+
+            <span class="n">content</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;content&#39;</span><span class="p">]</span>
+
+            <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
+                <span class="n">e</span><span class="p">[</span><span class="s1">&#39;index&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">index</span>
+                <span class="n">e</span><span class="p">[</span><span class="s1">&#39;page&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">page</span>
+                <span class="n">e</span><span class="p">[</span><span class="s1">&#39;total&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;totalElements&#39;</span><span class="p">]</span>
+                <span class="k">yield</span> <span class="n">e</span>
+                <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;last&#39;</span><span class="p">]:</span>
+                <span class="k">break</span>
+
+            <span class="n">page</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+<div class="viewcode-block" id="CityIq.get_assets"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CityIq.get_assets">[docs]</a>    <span class="k">def</span> <span class="nf">get_assets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">zone</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+        <span class="c1"># A space &#39; &#39; is interpreted as querying for all records, while a blank &#39;&#39; is</span>
+        <span class="c1"># an error.</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;assetType&#39;</span><span class="p">,</span> <span class="n">device_type</span> <span class="k">if</span> <span class="n">device_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s1">&#39; &#39;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_pages</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">metadata_url</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">assets_search_suffix</span><span class="p">,</span>
+                                <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span> <span class="n">zone</span><span class="o">=</span><span class="n">zone</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">Asset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">assets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return all system assets&quot;&quot;&quot;</span>
+        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_assets</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">asset_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return assets in row form in a pandas Dataframe&quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">pandas</span> <span class="k">import</span> <span class="n">DataFrame</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">([</span><span class="n">e</span><span class="o">.</span><span class="n">row</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">assets</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="n">Asset</span><span class="o">.</span><span class="n">row_header</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return all nodes&quot;&quot;&quot;</span>
+        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_assets</span><span class="p">(</span><span class="s1">&#39;NODE&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">cameras</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return camera assets&quot;&quot;&quot;</span>
+        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_assets</span><span class="p">(</span><span class="s1">&#39;CAMERA&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">env_sensors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return environmental sensors&quot;&quot;&quot;</span>
+        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_assets</span><span class="p">(</span><span class="s1">&#39;ENV_SENSOR&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">em_sensors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return some other kind of sensor. Electro-magnetic? &quot;&quot;&quot;</span>
+        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_assets</span><span class="p">(</span><span class="s1">&#39;EM_SENSOR&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">mics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return microphone assets&quot;&quot;&quot;</span>
+        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_assets</span><span class="p">(</span><span class="s1">&#39;MIC&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="CityIq.get_locations"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CityIq.get_locations">[docs]</a>    <span class="k">def</span> <span class="nf">get_locations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">zone</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+        <span class="c1"># A space &#39; &#39; is interpreted as querying for all records, while a blank &#39;&#39; is</span>
+        <span class="c1"># an error.</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;locationType&#39;</span><span class="p">,</span> <span class="n">location_type</span> <span class="k">if</span> <span class="n">location_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s1">&#39; &#39;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_pages</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">metadata_url</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">locations_search_suffix</span><span class="p">,</span>
+                                <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span> <span class="n">zone</span><span class="o">=</span><span class="n">zone</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">Location</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">locations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_locations</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">locations_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">pandas</span> <span class="k">import</span> <span class="n">DataFrame</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">([</span><span class="n">e</span><span class="o">.</span><span class="n">row</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">locations</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="n">Location</span><span class="o">.</span><span class="n">row_header</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">walkways</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_locations</span><span class="p">(</span><span class="s1">&#39;WALKWAY&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">traffic_lanes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_locations</span><span class="p">(</span><span class="s1">&#39;TRAFFIC_LANE&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">parking_zones</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_locations</span><span class="p">(</span><span class="s1">&#39;PARKING_ZONE&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_event_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+        <span class="n">bbox</span> <span class="o">=</span> <span class="n">bbox</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">bbox</span>
+
+        <span class="k">if</span> <span class="n">event_type</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;PKIN&#39;</span><span class="p">,</span> <span class="s1">&#39;PKOUT&#39;</span><span class="p">):</span>
+            <span class="n">zone</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">parking_zone</span>
+            <span class="n">location_type</span> <span class="o">=</span> <span class="s1">&#39;PARKING_ZONE&#39;</span>
+        <span class="k">elif</span> <span class="n">event_type</span> <span class="o">==</span> <span class="s1">&#39;PEDEVT&#39;</span><span class="p">:</span>
+            <span class="n">location_type</span> <span class="o">=</span> <span class="s1">&#39;WALKWAY&#39;</span>
+            <span class="n">zone</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">pedestrian_zone</span>
+        <span class="k">elif</span> <span class="n">event_type</span> <span class="o">==</span> <span class="s1">&#39;TFEVT&#39;</span><span class="p">:</span>
+            <span class="n">location_type</span> <span class="o">=</span> <span class="s1">&#39;TRAFFIC_LANE&#39;</span>
+            <span class="n">zone</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">traffic_zone</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">CityIqError</span><span class="p">(</span><span class="s2">&quot;Unknown event type: &#39;</span><span class="si">{}</span><span class="s2">&#39; &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">event_type</span><span class="p">))</span>
+
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;bbox&#39;</span><span class="p">:</span> <span class="n">bbox</span><span class="p">,</span>
+            <span class="s1">&#39;locationType&#39;</span><span class="p">:</span> <span class="n">location_type</span><span class="p">,</span>
+            <span class="s1">&#39;eventType&#39;</span><span class="p">:</span> <span class="n">event_type</span><span class="p">,</span>
+            <span class="s1">&#39;startTime&#39;</span><span class="p">:</span> <span class="n">start_time</span><span class="p">,</span>
+            <span class="s1">&#39;endTime&#39;</span><span class="p">:</span> <span class="n">end_time</span><span class="p">,</span>
+            <span class="s1">&#39;pageSize&#39;</span><span class="p">:</span> <span class="mi">10000</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">zone</span><span class="p">,</span> <span class="n">params</span>
+
+    <span class="k">def</span> <span class="nf">_events_page</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">bbox</span><span class="p">,</span> <span class="n">event_type</span><span class="p">):</span>
+
+        <span class="n">events_url</span> <span class="o">=</span> <span class="s1">&#39;/v2/locations/events&#39;</span>
+
+        <span class="n">zone</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_event_params</span><span class="p">(</span><span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">)</span>
+
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">http_get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">event_url</span> <span class="o">+</span> <span class="n">events_url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">zone</span><span class="o">=</span><span class="n">zone</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+
+<div class="viewcode-block" id="CityIq.events"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CityIq.events">[docs]</a>    <span class="k">def</span> <span class="nf">events</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">end_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">age</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">span</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">event_type</span><span class="o">=</span><span class="s1">&#39; &#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param start_time:</span>
+<span class="sd">        :param end_time:</span>
+<span class="sd">        :param age:  if start_time is not specified, the start time in terms of seconds before the end time</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span> <span class="o">=</span> <span class="n">se_time</span><span class="p">(</span><span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">age</span><span class="p">,</span> <span class="n">span</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Starting events start_time=</span><span class="si">{}</span><span class="s2"> end_time=</span><span class="si">{}</span><span class="s2">, event_type=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcfromtimestamp</span><span class="p">(</span><span class="n">start_time</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">),</span>
+            <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcfromtimestamp</span><span class="p">(</span><span class="n">end_time</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">),</span>
+            <span class="n">event_type</span>
+        <span class="p">))</span>
+
+        <span class="n">page</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_events_page</span><span class="p">(</span><span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">bbox</span><span class="p">,</span> <span class="n">event_type</span><span class="p">)</span>
+
+            <span class="n">meta</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;metaData&#39;</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;content&#39;</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">break</span>
+
+            <span class="n">min_ts</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">64</span>
+            <span class="n">max_ts</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;content&#39;</span><span class="p">]):</span>
+                <span class="n">e</span><span class="p">[</span><span class="s1">&#39;page&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">page</span>
+                <span class="n">e</span><span class="p">[</span><span class="s1">&#39;page_item&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+                <span class="n">min_ts</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">min_ts</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">]))</span>
+                <span class="n">max_ts</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_ts</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">]))</span>
+                <span class="k">yield</span> <span class="n">e</span>
+
+            <span class="c1"># If the end time is not the end time we asked for then</span>
+            <span class="c1"># run another request to get the rest of the events.</span>
+            <span class="n">start_time_r</span><span class="p">,</span> <span class="n">end_time_r</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;startTs&#39;</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;endTs&#39;</span><span class="p">])</span>
+
+            <span class="k">assert</span> <span class="p">(</span><span class="n">start_time_r</span> <span class="o">==</span> <span class="n">start_time</span><span class="p">)</span>
+
+            <span class="c1"># 3*60== three minutes, the approximate settling time of events.  ( Or so I&#39;m told ... )</span>
+            <span class="k">if</span> <span class="n">end_time_r</span> <span class="o">==</span> <span class="n">end_time</span> <span class="ow">or</span> <span class="n">min_ts</span> <span class="o">==</span> <span class="n">max_ts</span> <span class="ow">or</span> <span class="p">(</span><span class="n">end_time</span> <span class="o">-</span> <span class="n">max_ts</span><span class="p">)</span> <span class="o">/</span> <span class="mi">1000</span> <span class="o">&lt;</span> <span class="mi">3</span> <span class="o">*</span> <span class="mi">60</span><span class="p">:</span>
+                <span class="k">break</span>
+
+            <span class="k">assert</span> <span class="n">end_time</span> <span class="o">&gt;</span> <span class="n">end_time_r</span>
+
+            <span class="n">start_time</span> <span class="o">=</span> <span class="n">max_ts</span>  <span class="c1"># end_time_r</span>
+
+            <span class="n">page</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Ending events&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CityIq.events_async"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CityIq.events_async">[docs]</a>    <span class="k">def</span> <span class="nf">events_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">events</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;PKIN&quot;</span><span class="p">,</span> <span class="s2">&quot;PKOUT&quot;</span><span class="p">]):</span>
+        <span class="sd">&quot;&quot;&quot;Use the websocket to get events. The websocket is run in a thread, and this</span>
+<span class="sd">        function is a generator that returns results. &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">queue</span> <span class="k">import</span> <span class="n">Queue</span>
+        <span class="kn">import</span> <span class="nn">json</span>
+
+        <span class="n">q</span> <span class="o">=</span> <span class="n">Queue</span><span class="p">()</span>
+
+        <span class="n">w</span> <span class="o">=</span> <span class="n">EventWorker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
+
+        <span class="n">w</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">item</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">item</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="k">yield</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="n">q</span><span class="o">.</span><span class="n">task_done</span><span class="p">()</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">total_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a bounding box for the system from all of the assets. This will be affected by the</span>
+<span class="sd">        bbox set in the config, so it should usually be smaller than the one in the config&quot;&quot;&quot;</span>
+        <span class="n">assets</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_assets</span><span class="p">())</span>
+
+        <span class="n">lats</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">lat</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">assets</span><span class="p">]</span>
+        <span class="n">lons</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">lon</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">assets</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">:</span><span class="si">{}</span><span class="s2">,</span><span class="si">{}</span><span class="s2">:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">lats</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">lons</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="n">lats</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="n">lons</span><span class="p">))</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Eric Busboom.
+
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+
+    </div>
+
+
+
+
+  </body>
+</html>

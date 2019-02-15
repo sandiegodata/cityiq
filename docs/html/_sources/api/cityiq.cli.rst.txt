@@ -1,0 +1,46 @@
+cityiq.cli package
+==================
+
+Submodules
+----------
+
+cityiq.cli.assets module
+------------------------
+
+.. automodule:: cityiq.cli.assets
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cityiq.cli.config module
+------------------------
+
+.. automodule:: cityiq.cli.config
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cityiq.cli.events module
+------------------------
+
+.. automodule:: cityiq.cli.events
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cityiq.cli.locations module
+---------------------------
+
+.. automodule:: cityiq.cli.locations
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: cityiq.cli
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -1,0 +1,190 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>cityiq.clean_events &#8212; cityiq 0.0.4 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+
+  <h1>Source code for cityiq.clean_events</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Clean events, removing duplicates</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+
+<div class="viewcode-block" id="augment_df"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.clean_events.augment_df">[docs]</a><span class="k">def</span> <span class="nf">augment_df</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;ts_rounded&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">timestamp</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>  <span class="c1"># Quantize to 1 s</span>
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">ts_rounded</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;delta&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">eventType</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="s1">&#39;PKIN&#39;</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;in&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">eventType</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="s1">&#39;PKIN&#39;</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;out&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">eventType</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="s1">&#39;PKOUT&#39;</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">)</span>  <span class="c1"># just in case.</span>
+
+    <span class="k">return</span> <span class="n">df</span></div>
+
+
+<div class="viewcode-block" id="dedup_1s"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.clean_events.dedup_1s">[docs]</a><span class="k">def</span> <span class="nf">dedup_1s</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Deduplicate by dropping events of sametype that occur in 1s window. &quot;&quot;&quot;</span>
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;ts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">ts_rounded</span> <span class="o">-</span> <span class="n">df</span><span class="o">.</span><span class="n">ts_rounded</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Seconds from start of dataset</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">([</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;eventType&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;ts_rounded&#39;</span><span class="p">,</span> <span class="s1">&#39;eventType&#39;</span><span class="p">,</span> <span class="s1">&#39;locationUid&#39;</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">df</span></div>
+
+
+<div class="viewcode-block" id="dedup_rolling"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.clean_events.dedup_rolling">[docs]</a><span class="k">def</span> <span class="nf">dedup_rolling</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Entry point for rolling count debouncing&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">rolling_count</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>  <span class="c1"># https://stackoverflow.com/a/25120837</span>
+        <span class="sd">&quot;&quot;&quot;Apply a sequence number to runs of events of the same value&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">val</span> <span class="o">==</span> <span class="n">rolling_count</span><span class="o">.</span><span class="n">previous</span><span class="p">:</span>
+            <span class="n">rolling_count</span><span class="o">.</span><span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">rolling_count</span><span class="o">.</span><span class="n">previous</span> <span class="o">=</span> <span class="n">val</span>
+            <span class="n">rolling_count</span><span class="o">.</span><span class="n">count</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">rolling_count</span><span class="o">.</span><span class="n">count</span>
+
+    <span class="k">def</span> <span class="nf">apply_rc</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+        <span class="n">rolling_count</span><span class="o">.</span><span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># static variable</span>
+        <span class="n">rolling_count</span><span class="o">.</span><span class="n">previous</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># static variable</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;rolling_count&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">delta</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">rolling_count</span><span class="p">)</span>  <span class="c1"># new column in dataframe</span>
+
+        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;run_st&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">ts_rounded</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">rolling_count</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> \
+            <span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;ffill&#39;</span><span class="p">)</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;run_age&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">ts_rounded</span> <span class="o">-</span> <span class="n">df</span><span class="o">.</span><span class="n">run_st</span>
+
+        <span class="k">return</span> <span class="n">df</span>
+
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;locationUid&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">apply_rc</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="re_norm_location"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.clean_events.re_norm_location">[docs]</a><span class="k">def</span> <span class="nf">re_norm_location</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">([</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;eventType&#39;</span><span class="p">])</span> \
+        <span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;eventType&#39;</span><span class="p">])</span> \
+        <span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">)</span> \
+        <span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="s1">&#39;15Min&#39;</span><span class="p">)</span> \
+        <span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="n">t</span><span class="p">[</span><span class="s1">&#39;cs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">delta</span><span class="o">.</span><span class="n">cumsum</span><span class="p">()</span>
+
+    <span class="c1"># Find a two day rolling average</span>
+    <span class="n">t</span><span class="p">[</span><span class="s1">&#39;cs_mean&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">cs</span><span class="o">.</span><span class="n">rolling</span><span class="p">(</span><span class="s1">&#39;2d&#39;</span><span class="p">,</span> <span class="n">closed</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="o">-</span><span class="mi">24</span> <span class="o">*</span> <span class="mi">4</span><span class="p">)</span>
+
+    <span class="c1"># Substract off the mean. This makes the long term slope zero, like it should be</span>
+    <span class="n">t</span><span class="p">[</span><span class="s1">&#39;cs_norm&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">cs</span> <span class="o">-</span> <span class="n">t</span><span class="o">.</span><span class="n">cs_mean</span><span class="p">)</span>
+    <span class="c1"># The lowest value should be zero, but since it almost never is, we&#39;ll take the 25the percentile of</span>
+    <span class="c1"># the daily minimums as the zero point.</span>
+    <span class="n">cs_min</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Grouper</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="s1">&#39;2D&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">cs_norm</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s1">&#39;25%&#39;</span><span class="p">]</span>
+
+    <span class="c1"># Sift the whole curve so the min value is zero.</span>
+    <span class="n">t</span><span class="p">[</span><span class="s1">&#39;cs_norm&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">cs_norm</span> <span class="o">-</span> <span class="n">cs_min</span>
+
+    <span class="c1"># But, since we used the 25th percentile for the min, there are still some values that</span>
+    <span class="c1"># are negative. Just truncate those.</span>
+    <span class="n">t</span><span class="p">[</span><span class="s1">&#39;cs_norm&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">cs_norm</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">cs_norm</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># Put the deltas back on. We&#39;ll need them to aggregate multiple locatios together,</span>
+    <span class="c1"># becuase the cs_* field are only correct for this location.</span>
+    <span class="n">t</span><span class="p">[</span><span class="s1">&#39;cs_norm&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">cs_norm</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+    <span class="n">t</span><span class="p">[</span><span class="s1">&#39;delta_norm&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">cs_norm</span><span class="o">.</span><span class="n">diff</span><span class="p">()</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">t</span></div>
+
+
+<div class="viewcode-block" id="plot_loc_norming"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.clean_events.plot_loc_norming">[docs]</a><span class="k">def</span> <span class="nf">plot_loc_norming</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="s1">&#39;cs&#39;</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">7</span><span class="p">))</span>
+    <span class="n">t</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;cs_mean&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">)</span>
+    <span class="n">t</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;cs_norm&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;green&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="clean_events"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.clean_events.clean_events">[docs]</a><span class="k">def</span> <span class="nf">clean_events</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">use_tqdm</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">locations</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Given an event scraper that has has &quot;&quot;&quot;</span>
+
+    <span class="n">frames</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">iterate_splits</span><span class="p">(</span><span class="n">use_tqdm</span><span class="o">=</span><span class="n">use_tqdm</span><span class="p">,</span> <span class="n">locations</span><span class="o">=</span><span class="n">locations</span><span class="p">):</span>
+        <span class="n">locationUid</span><span class="p">,</span> <span class="n">file_list</span> <span class="o">=</span> <span class="n">e</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">file_list</span><span class="p">],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">t</span> <span class="o">=</span> <span class="n">augment_df</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="o">.</span><span class="n">pipe</span><span class="p">(</span><span class="n">dedup_1s</span><span class="p">)</span><span class="o">.</span><span class="n">pipe</span><span class="p">(</span><span class="n">dedup_rolling</span><span class="p">)</span><span class="o">.</span><span class="n">pipe</span><span class="p">(</span><span class="n">re_norm_location</span><span class="p">)</span>
+        <span class="n">t</span><span class="p">[</span><span class="s1">&#39;locationUid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">locationUid</span>
+
+        <span class="n">t</span> <span class="o">=</span> <span class="n">t</span><span class="p">[[</span><span class="s1">&#39;locationUid&#39;</span><span class="p">,</span> <span class="s1">&#39;delta&#39;</span><span class="p">,</span> <span class="s1">&#39;cs&#39;</span><span class="p">,</span> <span class="s1">&#39;delta_norm&#39;</span><span class="p">,</span> <span class="s1">&#39;cs_norm&#39;</span><span class="p">]]</span>
+
+        <span class="n">frames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">frames</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Eric Busboom.
+
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+
+    </div>
+
+
+
+
+  </body>
+</html>

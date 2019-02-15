@@ -1,0 +1,249 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>CityIQ API &#8212; cityiq 0.0.4 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="License" href="license.html" />
+
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+
+  <div class="section" id="cityiq-api">
+<h1>CityIQ API<a class="headerlink" href="#cityiq-api" title="Permalink to this headline">¶</a></h1>
+<p>This module and command line tool provides access to the CityIQ API, with
+particular focus on getting metadata and parking events. The interface includes
+a basic access object for getting metadata and events, a scraper object for
+mass downloading events, and a command line tool for downloading and processing
+events.</p>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>Use pip:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">cityiq</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="module-cityiq.config">
+<span id="configuration"></span><h2>Configuration<a class="headerlink" href="#module-cityiq.config" title="Permalink to this headline">¶</a></h2>
+<p>The CityIq module and programs require a configuration file that hold credentials and urls. You can generate a default
+configuration with</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ciq_config</span>  <span class="o">-</span><span class="n">w</span>
+</pre></div>
+</div>
+<p>The generated file is configured for the San Diego system. To you this system , you will just need to add your
+client id and secret to the file.</p>
+<p>The  <a class="reference internal" href="api/cityiq.html#cityiq.config.Config" title="cityiq.config.Config"><code class="xref py py-class docutils literal notranslate"><span class="pre">Config</span></code></a> object can be constructed can constructed on a path where the config file is location. If none
+is specified it will look for this file in several places, in this order:</p>
+<ul class="simple">
+<li>The path specified in the constructor</li>
+<li>The path specified by the <code class="docutils literal notranslate"><span class="pre">CITYIQ_CONFIG</span></code> env var</li>
+<li><code class="docutils literal notranslate"><span class="pre">.city-iq.yaml</span></code> in the current dir</li>
+<li><code class="docutils literal notranslate"><span class="pre">city-iq.yaml</span></code> in the current dir</li>
+<li><code class="docutils literal notranslate"><span class="pre">.city-iq.yaml</span></code> in the user’s home dir</li>
+</ul>
+<p>Each of the configuration files can be overridden with a keywork in the <code class="docutils literal notranslate"><span class="pre">Config</span></code> object constructor, and each value
+can be accessed as an attribute or an index:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load from well-known file and override cache_dir</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">Config</span><span class="p">(</span><span class="n">cache_dir</span><span class="o">=</span><span class="s1">&#39;/tmp&#39;</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">cache_dir</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s1">&#39;cache_dir&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="module-cityiq.api">
+<span id="basic-use"></span><h2>Basic Use<a class="headerlink" href="#module-cityiq.api" title="Permalink to this headline">¶</a></h2>
+<p>API objects are the primary way to get access to assets and events. <a class="reference internal" href="api/cityiq.html#cityiq.api.CityIq" title="cityiq.api.CityIq"><code class="xref py py-class docutils literal notranslate"><span class="pre">CityIq</span></code></a> is the top level access
+object. The API offers access to Locations, Events and Events.</p>
+<p>Typically, you will construct <a class="reference internal" href="api/cityiq.html#cityiq.api.CityIq" title="cityiq.api.CityIq"><code class="xref py py-class docutils literal notranslate"><span class="pre">CityIq</span></code></a> from a <code class="xref py py-class docutils literal notranslate"><span class="pre">Config</span></code>. If a configuration is not specific,
+the system will look for the file in default locations. You can also override individual configuration parameters
+with keyword arguments to the constructor.</p>
+<div class="section" id="metadata-access">
+<h3>Metadata Access<a class="headerlink" href="#metadata-access" title="Permalink to this headline">¶</a></h3>
+<p>Metadata, for both locations and assets, can be fetched with property accessors. The bounding box for the queries can
+be set in the configuration, or on the  <a class="reference internal" href="api/cityiq.html#cityiq.api.CityIq" title="cityiq.api.CityIq"><code class="xref py py-class docutils literal notranslate"><span class="pre">CityIq</span></code></a> constructor.</p>
+<p>The asset metadata properties are:</p>
+<ul class="simple">
+<li><a class="reference internal" href="api/cityiq.html#cityiq.api.CityIq.assets" title="cityiq.api.CityIq.assets"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CityIq.assets</span></code></a> : All assets</li>
+<li><a class="reference internal" href="api/cityiq.html#cityiq.api.CityIq.nodes" title="cityiq.api.CityIq.nodes"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CityIq.nodes</span></code></a> : Nodes, the parents for other assets on a pole</li>
+<li><a class="reference internal" href="api/cityiq.html#cityiq.api.CityIq.cameras" title="cityiq.api.CityIq.cameras"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CityIq.cameras</span></code></a> : All assets</li>
+<li><a class="reference internal" href="api/cityiq.html#cityiq.api.CityIq.em_sensors" title="cityiq.api.CityIq.em_sensors"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CityIq.em_sensors</span></code></a> : ?</li>
+<li><a class="reference internal" href="api/cityiq.html#cityiq.api.CityIq.env_sensors" title="cityiq.api.CityIq.env_sensors"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CityIq.env_sensors</span></code></a> : Environmental sensors</li>
+</ul>
+<p>The location metadata properties are:</p>
+<ul class="simple">
+<li><a class="reference internal" href="api/cityiq.html#cityiq.api.CityIq.locations" title="cityiq.api.CityIq.locations"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CityIq.locations</span></code></a> : All locations</li>
+<li><a class="reference internal" href="api/cityiq.html#cityiq.api.CityIq.walkways" title="cityiq.api.CityIq.walkways"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CityIq.walkways</span></code></a> :</li>
+<li><a class="reference internal" href="api/cityiq.html#cityiq.api.CityIq.parking_zones" title="cityiq.api.CityIq.parking_zones"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CityIq.parking_zones</span></code></a> :</li>
+<li><code class="xref py py-attr docutils literal notranslate"><span class="pre">CityIq.traffic_lane</span></code> :</li>
+</ul>
+<p>Events can be fetched with <a class="reference internal" href="api/cityiq.html#cityiq.api.CityIq.events" title="cityiq.api.CityIq.events"><code class="xref py py-func docutils literal notranslate"><span class="pre">cityiq.api.CityIq.events()</span></code></a></p>
+<p>Each of these acessor properties or functions returns a generator that generates objects of a specific type,
+one base class for each of Locations, Assets or Events:</p>
+<ul class="simple">
+<li><a class="reference internal" href="api/cityiq.html#cityiq.api.Asset" title="cityiq.api.Asset"><code class="xref py py-class docutils literal notranslate"><span class="pre">Asset</span></code></a></li>
+<li><a class="reference internal" href="api/cityiq.html#cityiq.api.Location" title="cityiq.api.Location"><code class="xref py py-class docutils literal notranslate"><span class="pre">Location</span></code></a></li>
+<li><a class="reference internal" href="api/cityiq.html#cityiq.api.Event" title="cityiq.api.Event"><code class="xref py py-class docutils literal notranslate"><span class="pre">Event</span></code></a></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">bbox</span> <span class="o">=</span> <span class="s1">&#39;32.718987:-117.174244,32.707356:-117.154850&#39;</span>
+
+<span class="n">c</span> <span class="o">=</span> <span class="n">CityIq</span><span class="p">(</span><span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">)</span> <span class="c1"># Use default config, override bbox</span>
+
+<span class="c1"># Get Locations</span>
+<span class="n">locations</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">locations</span><span class="p">)</span>
+
+<span class="c1"># Get the assets at this location:</span>
+<span class="k">for</span> <span class="n">location</span> <span class="ow">in</span> <span class="n">locations</span><span class="p">:</span>
+    <span class="n">do_something_with</span><span class="p">(</span><span class="n">location</span><span class="o">.</span><span class="n">assets</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="module-cityiq.cli.events">
+<span id="scraping"></span><h2>Scraping<a class="headerlink" href="#module-cityiq.cli.events" title="Permalink to this headline">¶</a></h2>
+<p>The ciq_events program is used to scrape and process events. To properly
+run the program, two directories should be specified in the configuration:</p>
+<ul class="simple">
+<li><code class="docutils literal notranslate"><span class="pre">events_cache</span></code>: The directory where hourly event fiels will be specified</li>
+<li><code class="docutils literal notranslate"><span class="pre">cache_dir</span></code>: The directory where processed event files will be written.</li>
+</ul>
+<p>To scrape events from the API, run <code class="xref std std-option docutils literal notranslate"><span class="pre">ciq_events</span> <span class="pre">--scrape</span> <span class="pre">--start_time</span></code>. If <code class="docutils literal notranslate"><span class="pre">&lt;isotime&gt;</span></code> is omitted, the program will start from the
+<code class="docutils literal notranslate"><span class="pre">start_time</span></code> specified in the config. This will download events from the
+start time in hourly batches, and save one file per hour.</p>
+<p>To process events, first break up the hourly event files by location with
+<code class="xref std std-option docutils literal notranslate"><span class="pre">ciq_events</span> <span class="pre">--split</span></code> command. This will create one CSV file per
+location per month. Then, re-combine and renormalize the data with
+<code class="xref std std-option docutils literal notranslate"><span class="pre">ciq_events</span> <span class="pre">--normalize</span></code>, which will write a CSV file to the local directory.</p>
+<p>The final output file will have columns for <cite>delta</cite>, which is the number of
+cars that went into or out of a parking zone per 15 minute interval. However,
+there are a lot of suprious events, so the <cite>delta_norm</cite> has a normalized value
+that tries to remove the spurious events.</p>
+<p>These programs can produce a lot of data. For the San Diego system, the
+extracted PKIN and PKOUT events for September 2018 through Feb 2019 is 21GB,
+and the download process takes several days. The final processed CSV file, with
+records at 15 minute intervals, is about 81MB and akes about an hour to process.</p>
+<p>For instance:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ ciq_events -s -e PKIN -e PKOUT -t <span class="m">20190901</span>
+$ ciq_events -S
+$ ciq_events -n
+</pre></div>
+</div>
+</div>
+<div class="section" id="contents">
+<h2>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authors.html">Authors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#version-0-0-3">Version 0.0.3</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/modules.html">Module Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/cityiq.html">cityiq package</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">CityIQ API</a><ul>
+<li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#module-cityiq.config">Configuration</a></li>
+<li><a class="reference internal" href="#module-cityiq.api">Basic Use</a><ul>
+<li><a class="reference internal" href="#metadata-access">Metadata Access</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-cityiq.cli.events">Scraping</a></li>
+<li><a class="reference internal" href="#contents">Contents</a></li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="license.html" title="next chapter">License</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Eric Busboom.
+
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+
+
+
+  </body>
+</html>

@@ -1,0 +1,294 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>cityiq.cli package &#8212; cityiq 0.0.4 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="cityiq package" href="cityiq.html" />
+
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+
+  <div class="section" id="cityiq-cli-package">
+<h1>cityiq.cli package<a class="headerlink" href="#cityiq-cli-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-cityiq.cli.assets">
+<span id="cityiq-cli-assets-module"></span><h2>cityiq.cli.assets module<a class="headerlink" href="#module-cityiq.cli.assets" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="cityiq.cli.assets.main">
+<code class="descclassname">cityiq.cli.assets.</code><code class="descname">main</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/cli/assets.html#main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.cli.assets.main" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main entry point allowing external calls</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>args</strong> (<em>[</em><a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a><em>]</em>) – command line parameter list</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cityiq.cli.assets.parse_args">
+<code class="descclassname">cityiq.cli.assets.</code><code class="descname">parse_args</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/cli/assets.html#parse_args"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.cli.assets.parse_args" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse command line parameters</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>args</strong> (<em>[</em><a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a><em>]</em>) – command line parameters as list of strings</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">command line parameters namespace</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3.6/library/argparse.html#argparse.Namespace" title="(in Python v3.6)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">argparse.Namespace</span></code></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cityiq.cli.assets.run">
+<code class="descclassname">cityiq.cli.assets.</code><code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/cli/assets.html#run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.cli.assets.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Entry point for console_scripts</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="cityiq.cli.assets.setup_logging">
+<code class="descclassname">cityiq.cli.assets.</code><code class="descname">setup_logging</code><span class="sig-paren">(</span><em>loglevel</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/cli/assets.html#setup_logging"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.cli.assets.setup_logging" title="Permalink to this definition">¶</a></dt>
+<dd><p>Setup basic logging</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>loglevel</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – minimum loglevel for emitting messages</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-cityiq.cli.config">
+<span id="cityiq-cli-config-module"></span><h2>cityiq.cli.config module<a class="headerlink" href="#module-cityiq.cli.config" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="cityiq.cli.config.main">
+<code class="descclassname">cityiq.cli.config.</code><code class="descname">main</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/cli/config.html#main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.cli.config.main" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main entry point allowing external calls</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>args</strong> (<em>[</em><a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a><em>]</em>) – command line parameter list</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cityiq.cli.config.parse_args">
+<code class="descclassname">cityiq.cli.config.</code><code class="descname">parse_args</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/cli/config.html#parse_args"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.cli.config.parse_args" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse command line parameters</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>args</strong> (<em>[</em><a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a><em>]</em>) – command line parameters as list of strings</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">command line parameters namespace</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3.6/library/argparse.html#argparse.Namespace" title="(in Python v3.6)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">argparse.Namespace</span></code></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cityiq.cli.config.run">
+<code class="descclassname">cityiq.cli.config.</code><code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/cli/config.html#run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.cli.config.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Entry point for console_scripts</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-cityiq.cli.events">
+<span id="cityiq-cli-events-module"></span><h2>cityiq.cli.events module<a class="headerlink" href="#module-cityiq.cli.events" title="Permalink to this headline">¶</a></h2>
+<p>The ciq_events program is used to scrape and process events. To properly
+run the program, two directories should be specified in the configuration:</p>
+<ul class="simple">
+<li><code class="docutils literal notranslate"><span class="pre">events_cache</span></code>: The directory where hourly event fiels will be specified</li>
+<li><code class="docutils literal notranslate"><span class="pre">cache_dir</span></code>: The directory where processed event files will be written.</li>
+</ul>
+<p>To scrape events from the API, run <code class="xref std std-option docutils literal notranslate"><span class="pre">ciq_events</span> <span class="pre">--scrape</span> <span class="pre">--start_time</span></code>. If <code class="docutils literal notranslate"><span class="pre">&lt;isotime&gt;</span></code> is omitted, the program will start from the
+<code class="docutils literal notranslate"><span class="pre">start_time</span></code> specified in the config. This will download events from the
+start time in hourly batches, and save one file per hour.</p>
+<p>To process events, first break up the hourly event files by location with
+<code class="xref std std-option docutils literal notranslate"><span class="pre">ciq_events</span> <span class="pre">--split</span></code> command. This will create one CSV file per
+location per month. Then, re-combine and renormalize the data with
+<code class="xref std std-option docutils literal notranslate"><span class="pre">ciq_events</span> <span class="pre">--normalize</span></code>, which will write a CSV file to the local directory.</p>
+<p>The final output file will have columns for <cite>delta</cite>, which is the number of
+cars that went into or out of a parking zone per 15 minute interval. However,
+there are a lot of suprious events, so the <cite>delta_norm</cite> has a normalized value
+that tries to remove the spurious events.</p>
+<p>These programs can produce a lot of data. For the San Diego system, the
+extracted PKIN and PKOUT events for September 2018 through Feb 2019 is 21GB,
+and the download process takes several days. The final processed CSV file, with
+records at 15 minute intervals, is about 81MB and akes about an hour to process.</p>
+<p>For instance:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ ciq_events -s -e PKIN -e PKOUT -t <span class="m">20190901</span>
+$ ciq_events -S
+$ ciq_events -n
+</pre></div>
+</div>
+<dl class="function">
+<dt id="cityiq.cli.events.main">
+<code class="descclassname">cityiq.cli.events.</code><code class="descname">main</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/cli/events.html#main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.cli.events.main" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main entry point allowing external calls</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>args</strong> (<em>[</em><a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a><em>]</em>) – command line parameter list</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cityiq.cli.events.parse_args">
+<code class="descclassname">cityiq.cli.events.</code><code class="descname">parse_args</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/cli/events.html#parse_args"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.cli.events.parse_args" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse command line parameters</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>args</strong> (<em>[</em><a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a><em>]</em>) – command line parameters as list of strings</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">command line parameters namespace</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3.6/library/argparse.html#argparse.Namespace" title="(in Python v3.6)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">argparse.Namespace</span></code></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cityiq.cli.events.run">
+<code class="descclassname">cityiq.cli.events.</code><code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/cli/events.html#run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.cli.events.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Entry point for console_scripts</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="cityiq.cli.events.setup_logging">
+<code class="descclassname">cityiq.cli.events.</code><code class="descname">setup_logging</code><span class="sig-paren">(</span><em>loglevel</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/cli/events.html#setup_logging"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.cli.events.setup_logging" title="Permalink to this definition">¶</a></dt>
+<dd><p>Setup basic logging</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>loglevel</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – minimum loglevel for emitting messages</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-cityiq.cli.locations">
+<span id="cityiq-cli-locations-module"></span><h2>cityiq.cli.locations module<a class="headerlink" href="#module-cityiq.cli.locations" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-cityiq.cli">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-cityiq.cli" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">cityiq.cli package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-cityiq.cli.assets">cityiq.cli.assets module</a></li>
+<li><a class="reference internal" href="#module-cityiq.cli.config">cityiq.cli.config module</a></li>
+<li><a class="reference internal" href="#module-cityiq.cli.events">cityiq.cli.events module</a></li>
+<li><a class="reference internal" href="#module-cityiq.cli.locations">cityiq.cli.locations module</a></li>
+<li><a class="reference internal" href="#module-cityiq.cli">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">cityiq</a><ul>
+  <li><a href="cityiq.html">cityiq package</a><ul>
+      <li>Previous: <a href="cityiq.html" title="previous chapter">cityiq package</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/cityiq.cli.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Eric Busboom.
+
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+
+      |
+      <a href="../_sources/api/cityiq.cli.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+
+
+
+  </body>
+</html>

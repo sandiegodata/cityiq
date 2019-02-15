@@ -1,0 +1,69 @@
+cityiq package
+==============
+
+Subpackages
+-----------
+
+.. toctree::
+
+    cityiq.cli
+
+Submodules
+----------
+
+cityiq.api module
+-----------------
+
+.. automodule:: cityiq.api
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cityiq.clean\_events module
+---------------------------
+
+.. automodule:: cityiq.clean_events
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cityiq.config module
+--------------------
+
+.. automodule:: cityiq.config
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cityiq.exceptions module
+------------------------
+
+.. automodule:: cityiq.exceptions
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cityiq.scrape module
+--------------------
+
+.. automodule:: cityiq.scrape
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+cityiq.token module
+-------------------
+
+.. automodule:: cityiq.token
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: cityiq
+    :members:
+    :undoc-members:
+    :show-inheritance:
