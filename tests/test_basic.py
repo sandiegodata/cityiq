@@ -109,7 +109,7 @@ class TestBasic(CityIQTest):
             for c in n.assets:
                 print('  ', c)
 
-    def test_events(self):
+    def test_pkin_events(self):
 
         c = CityIq(Config(config_file, cache_dir='/tmp'))
 
@@ -129,10 +129,35 @@ class TestBasic(CityIQTest):
             min_ts = min(min_ts, int(e['timestamp']))
             max_ts = max(max_ts, int(e['timestamp']))
 
-        print(len(events), min_ts, max_ts)
+        self.assertEquals(388, len(events))
+        self.assertEquals(1549330381284, min_ts)
+        self.assertEquals(1549331098206, max_ts)
 
-        print(len(events), datetime.utcfromtimestamp(min_ts / 1000).astimezone(pacific),
-              datetime.utcfromtimestamp(max_ts / 1000).astimezone(pacific))
+    def test_pdevt_events(self):
+
+        c = CityIq(Config(config_file, cache_dir='/tmp'))
+
+        from datetime import datetime
+        import pytz
+
+        pacific = pytz.timezone('US/Pacific')
+
+        ts = pacific.localize(datetime(2019, 2, 4, 17, 30, 0)).timestamp()
+
+        events = list(c.events(start_time=ts, span=15 * 60, event_type='PEDEVT'))
+
+        min_ts = 2 ** 64
+        max_ts = 0
+
+        for i, e in enumerate(events):
+            min_ts = min(min_ts, int(e['timestamp']))
+            max_ts = max(max_ts, int(e['timestamp']))
+
+        print(min_ts, max_ts)
+
+        self.assertEquals(2061, len(events))
+        self.assertEquals(1549330201799, min_ts)
+        self.assertEquals(1549331099575, max_ts)
 
     def test_async_events(self):
 

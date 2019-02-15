@@ -243,6 +243,7 @@ class Event(CityIqObject):
 
 
 class EventWorker(threading.Thread):
+    """Thread worker for websociet events"""
 
     def __init__(self, client, events, queue) -> None:
 
@@ -322,7 +323,7 @@ def time_ago(days=None, hours=None, minutes=None, seconds=None):
     return int(round(t * 1000, 0))
 
 
-def se_time(self, start_time=None, end_time=None, ago=None, span=None):
+def se_time(start_time=None, end_time=None, ago=None, span=None):
     if ago and span:
         raise CityIqError("Specify either age or span, but not both")
 
@@ -396,8 +397,7 @@ class CityIq(object):
             url = url + '?' + "&".join("{}={}".format(k, v) for k, v in params.items())
 
         headers = {
-            'Authorization': 'Bearer ' + self.token,
-            'Predix-Zone-Id': zone
+            'Authorization': 'Bearer ' + self.token
         }
 
         if zone:
@@ -534,10 +534,12 @@ class CityIq(object):
             location_type = 'PARKING_ZONE'
         elif event_type == 'PEDEVT':
             location_type = 'WALKWAY'
-            zone = self.config.traffic_zone
-        else:
+            zone = self.config.pedestrian_zone
+        elif event_type == 'TFEVT':
             location_type = 'TRAFFIC_LANE'
             zone = self.config.traffic_zone
+        else:
+            raise CityIqError("Unknown event type: '{}' ".format(event_type))
 
         params = {
             'bbox': bbox,

@@ -11,11 +11,13 @@ from itertools import chain
 from pathlib import Path
 
 from .api import CityIq
+from .exceptions import CityIqError
 
 logger = logging.getLogger(__name__)
 
 
 class EventScraper(object):
+    event_locations_dir = 'event-locations'
 
     def __init__(self, config, start_time, event_types):
 
@@ -42,7 +44,7 @@ class EventScraper(object):
 
         c = CityIq(self.config)
 
-        r = list(c.events(start_time=start_time, span=span, event_type=event_type))
+        r = list(c.events(start_time=int(start_time), span=span, event_type=event_type))
 
         return r
 
@@ -76,6 +78,7 @@ class EventScraper(object):
         return await group
 
     def get_events(self, start_time, span):
+
         loop = asyncio.get_event_loop()
 
         results = loop.run_until_complete(self._get_events(start_time, span))
@@ -89,6 +92,7 @@ class EventScraper(object):
         from time import sleep
         sleep_time = 20
 
+        last_e = None
         for i in range(4):
             try:
                 return self.get_events(start_time, span)
@@ -97,9 +101,12 @@ class EventScraper(object):
                     logger.debug(f"ERROR {e}: will try again after {sleep_time} seconds")
                     sleep(sleep_time)
                     sleep_time *= 2
+                    last_e = e
                     continue
                 else:
                     raise
+        else:
+            raise last_e
 
     def _make_filename(self, st):
 
@@ -109,23 +116,40 @@ class EventScraper(object):
 
         return self.cache.joinpath(fn)
 
-    def yield_file_names(self):
+    def yield_file_names(self, start=None, end=None):
 
         d = timedelta(hours=1)
 
-        st = self.start_time
+        if start is None:
+            start = self.start_time
 
-        while st < datetime.now().astimezone(self.start_time.tzinfo):
-            fn_path = self._make_filename(st)
-            yield st, fn_path, fn_path.exists()
+        if end is None:
+            end = datetime.now().astimezone(self.start_time.tzinfo)
 
-            st += d
+        while start < end:
+            fn_path = self._make_filename(start)
+            yield start, fn_path, fn_path.exists()
+
+            start += d
+
+    def yield_months(self):
+        '''Yield the results of yield_file_names'''
+        from dateutil.relativedelta import relativedelta
+
+        this_month = self.start_time.replace(day=1)
+
+        while this_month < datetime.now().astimezone(self.start_time.tzinfo):
+            next_month = this_month + relativedelta(months=1)
+            yield this_month, list(self.yield_file_names(this_month, next_month))
+
+            this_month = next_month
 
     def scrape_events(self):
 
         logger.debug("scrape: Starting at {} for events {}".format(self.start_time, self.event_types))
 
         for st, fn_path, exists in self.yield_file_names():
+
             if not exists:
                 logger.debug(f"{fn_path}: fetching")
 
@@ -139,97 +163,74 @@ class EventScraper(object):
             else:
                 logger.debug(f"{fn_path}: exists")
 
-    def iterate_records(self):
+    def iterate_records(self, records=None):
+        """For a set of file name records ( from yield_file_names), yield event objects  """
+        if records is None:
+            records = self.yield_file_names()
 
-        for st, fn_path, exists in self.yield_file_names():
-            if exists:
-                with fn_path.open() as f:
-                    for e in json.load(f):
-                        yield e
+        for st, fn_path, exists in records:
+            try:
+                if exists:
+                    with fn_path.open() as f:
+                        o = json.load(f)
+                        for e in o:
+                            yield e
+            except Exception as e:
+                raise CityIqError("Failed to load scraped file {} : {}".format(str(fn_path), e))
 
-    def pair(self):
-        """Yield paired events, consisting of a locationUid, time in and time out"""
-        import pandas as pd
+    def split_locations(self, use_tqdm=False):
+        """Split the scraped event files into sperate files per month and location,
+        which are required for later stages of processing. """
+
         from operator import itemgetter
-        from tqdm import tqdm
+        import pandas as pd
 
         keys = ['timestamp', 'locationUid', 'eventType']
         ig = itemgetter(*keys)
 
-        rows = [ig(e) for e in self.iterate_records()]
-        df = pd.DataFrame(rows, columns=keys)
-        df['timestamp'] = pd.to_datetime(df.timestamp, unit='ms')
+        if use_tqdm:
+            from tqdm.auto import tqdm
 
-        g = df.sort_values('timestamp').groupby('locationUid')
+        else:
+            def tqdm(g, *args, **kwargs):
+                yield from g
 
-        def yield_clean_events(df):
-            """Clean the events by removing duplicates.
-            In a string of duplicated events for a single location -- such as multiple PKOUT,
-            yield only the last one. """
+        cache = Path(self.config.cache_dir).joinpath(self.event_locations_dir)
 
-            events = [(r.eventType, r.timestamp) for _, r in group.iterrows()]
+        locations = set()
 
-            events = list(sorted(events, key=lambda r: r[1])) + ['END']
+        for m in tqdm(list(self.yield_months()), desc='Months'):
 
-            found_in = False
+            recs = []
 
-            for i in range(len(events) - 1):
-                event = events[i]
-                next_event = events[i + 1]
+            for r in self.iterate_records(tqdm(m[1], desc='Build dataframe')):
+                recs.append(ig(r))
 
-                if not found_in:
-                    if event[0] == 'PKIN':
-                        found_in = True
-                    else:
-                        continue
+            if not recs:
+                continue
 
-                if event[0] != next_event[0]:
-                    yield event
+            df = pd.DataFrame(recs, columns=keys).sort_values('timestamp')
+            grp = df.groupby('locationUid')
 
-        def yield_debounced_events(events):
+            for name, frame in tqdm(grp, desc='Iterate groups'):
+                locations.add(name)
+                cache.joinpath(name).mkdir(parents=True, exist_ok=True)
+                fn = cache.joinpath('{}/{}.csv'.format(name, m[0].date().isoformat()))
+                frame.to_csv(fn)
 
-            last_in = None
+    def iterate_splits(self, use_tqdm=False, locations=None):
+        """Iterate over the splits produced by split_locations"""
 
-            for e in events:
-                if last_in is None and e[0] == 'PKIN':
-                    last_in = e[1]
-                    yield e
+        cache = Path(self.config.cache_dir).joinpath(self.event_locations_dir)
 
-                elif last_in is not None and e[0] == 'PKOUT' and (e[1] - last_in).seconds > 2 * 60:
-                    last_in = None
-                    yield e
+        if not locations:
+            locations = [e.name for e in cache.glob('*')]
 
-        def yield_paired_events(events):
+        if use_tqdm:
+            from tqdm.auto import tqdm
+            locations = tqdm(locations)
 
-            last = None
-
-            for e in events:
-                if e[0] == 'PKIN':
-                    assert last is None
-                    last = e
-                elif e[0] == 'PKOUT':
-                    assert last[0] == 'PKIN'
-                    yield [last[1], e[1]]
-                    last = None
-
-        def convert_group_frame(group):
-
-            events = [e for e in yield_paired_events(yield_debounced_events(yield_clean_events(group)))]
-
-            t = pd.DataFrame({'locationUid': gname, 'pkin': [e[0] for e in events], 'pkout': [e[1] for e in events]})
-
-            if len(t):
-                t['duration'] = ((t['pkout'] - t['pkin']).dt.seconds / 60).round(0).astype(int)
-
-            return t
-
-        frames = []
-        for gname, _ in tqdm(g):
-            group = g.get_group(gname)
-            frames.append(convert_group_frame(group))
-
-        df = pd.concat(frames, sort=True, ignore_index=True)
-
-        df['duration'] = (df.pkout - df.pkin).dt.seconds
-
-        return df
+        for location in locations:
+            locations_dir = cache.joinpath(location)
+            if locations_dir.is_dir():
+                yield location, [e for e in locations_dir.glob('*.csv')]

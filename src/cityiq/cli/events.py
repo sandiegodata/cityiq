@@ -48,7 +48,12 @@ def parse_args(args):
 
     group.add_argument('-s', '--scrape', help='Scrape new events', action='store_true')
 
-    group.add_argument('-p', '--pair', help='Pair in and out records and write a CSV file')
+    group.add_argument('-S', '--split', help='Split scraped records into month and location files', action='store_true')
+
+    group.add_argument('-n', '--normalize', help='Dedupe and normalize',
+                       action='store_true')
+
+    parser.add_argument('-e', '--event', action='append', help='Specify an event type for the scraper')
 
     return parser.parse_args(args)
 
@@ -106,7 +111,10 @@ def main(args):
 
     print(start_time)
 
-    s = EventScraper(config, start_time, ['PKIN', 'PKOUT'])
+    if not args.event:
+        args.event = ['PKIN', 'PKOUT']
+
+    s = EventScraper(config, start_time, args.event)
 
     if args.iterate:
         for r in s.iterate_records():
@@ -124,11 +132,27 @@ def main(args):
 
         s.scrape_events()
 
-    elif args.pair:
+    elif args.split:
+        print("Splitting scraped files")
+        s.run_split_locations(use_tqdm=True)
 
-        df = s.pair()
+    elif args.normalize:
 
-        df.to_csv(args.pair)
+        from cityiq.clean_events import clean_events
+
+        df = clean_events(s)
+
+        t_min, t_max = df.index.min(), df.index.max()
+
+        fn = "cityiq-{}-{}-{}.csv".format(
+            '_'.join(sorted(args.event)),
+            "{}{:02d}{:02d}".format(t_min.year, t_min.month, t_min.day),
+            "{}{:02d}{:02d}".format(t_max.year, t_max.month, t_min.day),
+        )
+
+        df.to_csv(fn)
+
+        print("Wrote ", fn)
 
 
 def run():
