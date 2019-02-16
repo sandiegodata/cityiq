@@ -34,6 +34,10 @@ The code will look for this file in several places in this order:
 Use
 ===
 
+After generating a config file you can run the ``ciq_events`` program to get event records. See the documentation for
+ Scraping_ for more information.
+
+The Documentation_ has more details, but not much more.
 
 
 Devlopment
@@ -69,3 +73,5 @@ information on PyScaffold see https://pyscaffold.org/.
 .. _CityIQ: https://developer.currentbyge.com/cityiq
 .. _PEP440: http://www.python.org/dev/peps/pep-0440/
 .. _PyPI: https://pypi.org/
+.. _Scraping: https://sandiegodata.github.io/cityiq/html/index.html#module-cityiq.cli.events
+.. _Documentation: https://sandiegodata.github.io/cityiq/s
