@@ -35,7 +35,7 @@ Use
 ===
 
 After generating a config file you can run the ``ciq_events`` program to get event records. See the documentation for
- Scraping_ for more information.
+Scraping_ for more information.
 
 The Documentation_ has more details, but not much more.
 
