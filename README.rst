@@ -74,4 +74,4 @@ information on PyScaffold see https://pyscaffold.org/.
 .. _PEP440: http://www.python.org/dev/peps/pep-0440/
 .. _PyPI: https://pypi.org/
 .. _Scraping: https://sandiegodata.github.io/cityiq/html/index.html#module-cityiq.cli.events
-.. _Documentation: https://sandiegodata.github.io/cityiq/s
+.. _Documentation: https://sandiegodata.github.io/cityiq/
