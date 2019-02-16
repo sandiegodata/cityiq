@@ -34,9 +34,6 @@ The code will look for this file in several places in this order:
 Use
 ===
 
-The :py:class:`cityiq.api.CityIq` object is the main entry point for the API. It is constructed on a
-:py:class:`cityiq.config.Config` object. For mass downloading and processing events, the :py:class`cityiq.scrape
-.EventScraper` is the main object, also constructed from a ``Config``
 
 
 Devlopment
