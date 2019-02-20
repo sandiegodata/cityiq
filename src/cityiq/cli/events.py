@@ -87,6 +87,8 @@ def parse_args(args):
 
     parser.add_argument('-e', '--event', action='append', help='Specify an event type for the scraper')
 
+    parser.add_argument('-T', '--threads', type=int, help='Number of threads to use for fetching data')
+
     return parser.parse_args(args)
 
 
@@ -146,7 +148,7 @@ def main(args):
     if not args.event:
         args.event = ['PKIN', 'PKOUT']
 
-    s = EventScraper(config, start_time, args.event)
+    s = EventScraper(config, start_time, args.event, max_workers=args.threads)
 
     if args.iterate:
         for r in s.iterate_records():

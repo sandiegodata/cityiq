@@ -376,6 +376,18 @@ def time_ago(days=None, hours=None, minutes=None, seconds=None):
 
 
 def se_time(start_time=None, end_time=None, ago=None, span=None):
+    if start_time:
+        try:
+            int(start_time)
+        except TypeError:
+            start_time = start_time.timestamp()
+
+    if end_time:
+        try:
+            int(end_time)
+        except TypeError:
+            end_time = end_time.timestamp()
+
     if ago and span:
         raise CityIqError("Specify either age or span, but not both")
 
@@ -457,7 +469,12 @@ class CityIq(object):
 
         r = requests.get(url, headers=headers, *args, **kwargs)
 
-        r.raise_for_status()
+        try:
+            r.raise_for_status()
+        except Exception:
+            # print('url: ', url)
+            # print('headers: ', headers)
+            raise
 
         return r
 
@@ -465,7 +482,7 @@ class CityIq(object):
 
         params = {
             'page': page,
-            'size': 5000,
+            'size': 20000,
             'bbox': bbox,
         }
 
@@ -606,7 +623,7 @@ class CityIq(object):
             'eventType': event_type,
             'startTime': start_time,
             'endTime': end_time,
-            'pageSize': 10000
+            'pageSize': 20000
         }
 
         return zone, params
@@ -619,7 +636,11 @@ class CityIq(object):
 
         r = self.http_get(self.config.event_url + events_url, params=params, zone=zone)
 
-        return r.json()
+        try:
+            return r.json()
+        except Exception:
+            print(r.text)
+            raise
 
     def events(self, start_time=None, end_time=None, age=None, span=None, bbox=None, event_type=' '):
         """

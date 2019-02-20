@@ -52,7 +52,7 @@ class Config(object):
         """
 
         self.parameters = 'client_id secret bbox zone  uaa_url metadata_url event_url _config_file ' \
-                          'start_time cache_dir events_cache'.split()
+                          'start_time cache_dir events_cache timezone'.split()
 
         self.env_vars = {e: f"CITYIQ_{e.upper()}" for e in self.parameters}
 

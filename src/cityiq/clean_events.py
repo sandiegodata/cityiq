@@ -105,7 +105,7 @@ def clean_events(s, use_tqdm=True, locations=None):
         t = augment_df(df).pipe(dedup_1s).pipe(dedup_rolling).pipe(re_norm_location)
         t['locationUid'] = locationUid
 
-        t = t[['locationUid', 'delta', 'cs', 'delta_norm', 'cs_norm']]
+        t = t[['locationUid', 'in', 'out', 'delta', 'cs', 'delta_norm', 'cs_norm']]
 
         frames.append(t)
 

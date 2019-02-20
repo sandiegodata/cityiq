@@ -21,13 +21,15 @@ logger = logging.getLogger(__name__)
 class EventScraper(object):
     event_locations_dir = 'event-locations'
 
-    def __init__(self, config, start_time, event_types):
+    def __init__(self, config, start_time, event_types, max_workers=None):
 
         self.config = config
         self.start_time = start_time.replace(minute=0, second=0)
         self.event_types = event_types
 
         self.cache = Path(self.config.events_cache)
+
+        self.max_workers = max_workers
 
         if not self.cache.exists() or not self.cache.is_dir():
             raise CityIq("The cache dir ('{}') must exist and be a directory".format(self.cache))
@@ -54,6 +56,7 @@ class EventScraper(object):
         """
         Async get of all types of events.
         """
+        import concurrent
 
         ts = start_time
 
@@ -69,11 +72,12 @@ class EventScraper(object):
         loop = asyncio.get_event_loop()
         futures = []
 
-        for span in spans:
-            d = timedelta(seconds=span)
-            for event_type in self.event_types:
-                futures.append(loop.run_in_executor(None, self.get_type_events, ts.timestamp(), span, event_type))
-            ts = ts + d
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as pool:
+            for span in spans:
+                d = timedelta(seconds=span)
+                for event_type in self.event_types:
+                    futures.append(loop.run_in_executor(pool, self.get_type_events, ts.timestamp(), span, event_type))
+                ts = ts + d
 
         group = asyncio.gather(*futures)
 
@@ -160,7 +164,7 @@ class EventScraper(object):
                 with fn_path.open('w') as f:
                     json.dump(r, f)
 
-                logger.debug(f"{fn_path}: wrote")
+                logger.debug(f"{fn_path}: wrote {len(r)} records")
 
             else:
                 logger.debug(f"{fn_path}: exists")
