@@ -12,105 +12,45 @@ from cityiq.token import logger as token_logger
 
 from .support import CityIQTest
 
-# config_file = '/Users/eric/proj/virt-proj/data-project/sdrdl-data-projects/sandiego.gov/predix.io/prod-credentials
-# .yaml'
-
 
 class TestBasic(CityIQTest):
-
-    def test_get_token(self):
-        config = Config(cache_dir='/tmp')
-
-        c = CityIq(config)
-
-        self.assertTrue(len(c.token) > 100)
-
-    def test_get_assets(self):
-
-        c = CityIq(Config(cache_dir='/tmp'))
-
-        print("!!!!", c.config.metadata_url)
-
-        assets = list(c.get_assets())
-
-        self.assertTrue(len(assets) > 4000)
-
-        # return
-
-        for a in assets[:5]:
-            print(a.assetType, a.assetUid)
-            # print(a.data)
-            # print(l.detail)
-            for l in a.locations:
-                print('  ', l)
-
-            for c in a.children:
-                print('  ', c)
-
-    def test_total_bbox(self):
-
-        c = CityIq(Config(cache_dir='/tmp'))
-
-        print(c.total_bounds)
-
-        print(len(list(c.get_assets())))
-
-    def test_dump_assets(self):
-        import csv
-
-        c = CityIq(Config(cache_dir='/tmp'))
-        with open('/tmp/assets.csv', 'w') as f:
-            w = csv.writer(f)
-            w.writerow('id type lat lon'.split())
-
-            for a in c.get_assets():
-                w.writerow([a.assetUid, a.assetType, a.lat, a.lon])
-
-    def test_get_locations(self):
-
-        c = CityIq(Config(cache_dir='/tmp'))
-
-        locations = list(c.get_locations())
-
-        self.assertTrue(len(locations) > 900)
-
-        for l in locations[:5]:
-            print('----')
-            print(l.locationType, l.locationUid)
-            # print(l.data)
-            # print(l.detail)
-            for a in l.assets:
-                print('   ', a)
 
     def test_location_events(self):
         from datetime import datetime
 
         c = CityIq(Config(cache_dir='/tmp'))
 
-        locations = list(c.locations)
+        locations = list(c.parking_zones)
 
-        start = c.tz.localize(datetime(2019, 2, 1, 11, 0, 0))
-        end = c.tz.localize(datetime(2019, 2, 1, 14, 0, 0))
+        start = c.tz.localize(datetime(2019, 1, 1, 0, 0, 0))
+        end = c.tz.localize(datetime(2019, 1, 31, 0, 0, 0))
 
-        print(locations[100].events('PKIN', start, end))
+        events = locations[100].events('PKIN', start, end)
 
-    def test_nodes(self):
+        self.assertEqual(3537, len(events))
 
-        c = CityIq(Config(cache_dir='/tmp'))
-
-        for n in c.nodes:
-            print(n)
-            for c in n.children:
-                print('  ', c)
-
-    def test_walkways(self):
+    def test_walkway_events(self):
+        from datetime import datetime
 
         c = CityIq(Config(cache_dir='/tmp'))
 
-        for n in c.parking_zones:
-            print(n)
-            for c in n.assets:
-                print('  ', c)
+        locations = list(c.walkways)
+
+        start = c.tz.localize(datetime(2019, 1, 1, 0, 0, 0))
+        end = c.tz.localize(datetime(2019, 1, 31, 0, 0, 0))
+
+        events = locations[100].events('PEDEVT', start, end)
+
+        self.assertEqual(15581, len(events))
+
+        # Longer
+
+        start = c.tz.localize(datetime(2018, 8, 1, 0, 0, 0))
+        end = c.tz.localize(datetime(2019, 1, 31, 0, 0, 0))
+
+        events = locations[50].events('PEDEVT', start, end)
+
+        self.assertEqual(53676, len(events))
 
     def test_pkin_events(self):
 
@@ -123,7 +63,7 @@ class TestBasic(CityIQTest):
 
         ts = pacific.localize(datetime(2019, 2, 4, 17, 30, 0)).timestamp()
 
-        events = list(c.events(start_time=ts, span=15 * 60, event_type='PKIN'))
+        events = c.events(start_time=ts, span=15 * 60, event_type='PKIN')
 
         min_ts = 2 ** 64
         max_ts = 0
@@ -200,3 +140,24 @@ class TestBasic(CityIQTest):
         config = Config()
 
         scrape_events(config, start_time, ['PKIN', 'PKOUT'])
+
+    def test_location_scrape(self):
+        import pytz
+        from cityiq.scrape import LocationEventScraper
+        from datetime import datetime
+        from cityiq import CityIq, Config
+
+        config = Config(cache_dir='/tmp')
+
+        c = CityIq(config)
+
+        locations = list(c.parking_zones)  # [100:105]
+
+        start_time = pytz.timezone('US/Pacific').localize(datetime(2018, 8, 1, 0, 0))
+        end_time = pytz.timezone('US/Pacific').localize(datetime.now())
+
+        print(len(locations))
+
+        s = LocationEventScraper(config, locations, 'PKIN', start_time, end_time, max_workers=4)
+        for r in s.get_events():
+            print(len(r))

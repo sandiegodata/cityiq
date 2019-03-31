@@ -82,7 +82,8 @@ class Config(object):
             if p.exists():
                 with p.open() as f:
                     c = yaml.load(f)
-                    c['_config_file'] = str(p)
+                    if c:
+                        c['_config_file'] = str(p)
                     return c
 
         return {}
@@ -125,3 +126,7 @@ class Config(object):
             return self.__getattr__(item)
         except AttributeError:
             raise IndexError(item)
+
+    def __str__(self):
+        import yaml
+        return yaml.dump(self.dict, default_flow_style=False)

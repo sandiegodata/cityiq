@@ -6,7 +6,7 @@ services:
                 context: .
                 dockerfile: Dockerfile
             environment:
-                - CITYIQ_EVENTS_CACHE= /data/cache/cityiq/events
+                - CITYIQ_EVENTS_CACHE=/data/cache/cityiq/events
                 - CITYIQ_CACHE_DIR=/data/cache/cityiq
             volumes:
                 - nas1-main:/data/

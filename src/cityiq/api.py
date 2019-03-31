@@ -55,9 +55,11 @@ one base class for each of Locations, Assets or Events:
 """
 
 import datetime
+import json
 import logging
 import threading
 import time
+from pathlib import Path
 
 import pytz
 import requests
@@ -104,10 +106,56 @@ class CityIqObject(object):
         return "<{}: {}>".format(type(self).__name__, self.data)
 
 
+class EventType(CityIqObject):
+
+    def __init__(self, client, data, asset=None, location=None):
+        super().__init__(client, data)
+        self.asset = asset
+        self.location = location
+
+    @staticmethod
+    def event_to_zone(config, event_type):
+
+        d = {
+            'PKIN': config.parking_zone,
+            'PKOUT': config.parking_zone,
+            'PEDEVT': config.pedestrian_zone,
+            'TFEVT': config.traffic_zone,
+            'TEMPERATURE': config.environmental_zone,
+            'PRESSURE': config.environmental_zone,
+            'METROLOGY': config.environmental_zone,
+            'HUMIDITY': config.environmental_zone,
+
+            # These are probably wrong ...
+            'ORIENTATION': config.environmental_zone,
+            'ENERGY_TIMESERIES': config.environmental_zone,
+            'ENERGY_ALERT': config.environmental_zone
+        }
+
+        return d.get(event_type)
+
+    @staticmethod
+    def event_to_location_type(event_type):
+
+        if event_type in ('PKIN', 'PKOUT'):
+            return 'PARKING_ZONE'
+        elif event_type == 'PEDEVT':
+            return 'WALKWAY'
+        elif event_type == 'TFEVT':
+            return 'TRAFFIC_LANE'
+        else:
+            return None
+
+
+class Event(CityIqObject):
+    types = ['PKIN', 'PKOUT', 'PEDEVT', 'TFEVT', 'TEMPERATURE', 'PRESSURE', 'ORIENTATION', 'METROLOGY', 'HUMIDITY',
+             'ENERGY_TIMESERIES', 'ENERGY_ALERT']
+
+
 class Asset(CityIqObject):
-    detail_url_suffix = '/v2/metadata/assets/{}'
-    locations_url_suffix = '/v2/metadata/assets/{}/locations'
-    children_url_suffix = '/v2/metadata/assets/{}/subAssets'
+    detail_url_suffix = '/api/v2/metadata/assets/{}'
+    locations_url_suffix = '/api/v2/metadata/assets/{}/locations'
+    children_url_suffix = '/api/v2/metadata/assets/{}/subAssets'
 
     row_header = 'assetUid assetType parentAssetUid mediaType events geometry'.split()
 
@@ -118,7 +166,7 @@ class Asset(CityIqObject):
     dclass_map = {'NODE': 'NodeAsset',
                   'CAMERA': 'CameraAsset',
                   'EM_SENSOR': 'EmSensorAsset',
-                  'XENV_SENSOR': 'EnvSensorAsset',
+                  'ENV_SENSOR': 'EnvSensorAsset',
                   'MIC': 'MicSensorAsset'
                   }
 
@@ -178,6 +226,15 @@ class Asset(CityIqObject):
             yield Asset(self.client, e)
 
     @property
+    def event_types(self):
+        """Return event types records"""
+        pass
+
+    def event_type(self, type):
+        """Return a specific event type record"""
+        pass
+
+    @property
     def row(self):
         """Return most important fields in a row format"""
         from operator import attrgetter
@@ -211,10 +268,9 @@ class MicSensorAsset(Asset):
 
 
 class Location(CityIqObject):
-    detail_url_suffix = '/v2/metadata/locations/{}'
-    assets_url_suffix = '/v2/metadata/locations/{}/assets'
-    events_url_suffix = '/v2/locations/{locationUid}/events?eventType={eventType}&startTime={startts}&' \
-                        'endTime={endts}'
+    detail_url_suffix = '/api/v2/metadata/locations/{}'
+    assets_url_suffix = '/api/v2/metadata/locations/{}/assets'
+    events_url_suffix = '/api/v2/event/locations/{locationUid}/events'
 
     row_header = 'locationUid locationType parentLocationUid  geometry'.split()
 
@@ -255,17 +311,12 @@ class Location(CityIqObject):
         for e in r.json()['assets']:
             yield Asset(self.client, e)
 
-    def events(self, eventType, start_time, end_time=None, span=None, ago=None):
-        start_time, end_time = se_time(self, start_time, end_time, ago, span)
+    def events(self, event_type, start_time, end_time=None, span=None, ago=None):
+        start_time, end_time = se_time(start_time, end_time, ago, span)
 
-        url = self.client.config.metadata_url + self.format(
-            locationUid=self.locationUid, eventType=eventType,
-            startts=start_time.timestamp() * 1000, endts=end_time.timestamp() * 100
-        )
+        url = self.client.config.event_url + self.events_url_suffix.format(locationUid=self.locationUid)
 
-        r = self.client.http_get(url)
-
-        return r.json()
+        return self.client._events(url, event_type, start_time, end_time, bbox=False)
 
     @property
     def row(self):
@@ -287,11 +338,6 @@ class TrafficLaneLocation(Location):
 
 class ParkingZoneLocation(Location):
     pass
-
-
-class Event(CityIqObject):
-    types = ['PKIN', 'PKOUT', 'PEDEVT', 'TFEVT', 'TEMPERATURE', 'PRESSURE', 'ORIENTATION', 'METROLOGY', 'HUMIDITY',
-             'ENERGY_TIMESERIES', 'ENERGY_ALERT']
 
 
 class EventWorker(threading.Thread):
@@ -376,15 +422,33 @@ def time_ago(days=None, hours=None, minutes=None, seconds=None):
 
 
 def se_time(start_time=None, end_time=None, ago=None, span=None):
+    def is_micros(v):
+        """Return true if an integer time is in microseconds"""
+
+        n = datetime.now().timestamp()
+
+        a = v / n
+
+        if a > 100 or a < 0.1:
+            return True
+
     if start_time:
         try:
             int(start_time)
+
+            if is_micros(start_time):
+                start_time = start_time / 1000
+
         except TypeError:
             start_time = start_time.timestamp()
 
     if end_time:
         try:
             int(end_time)
+
+            if is_micros(end_time):
+                end_time = end_time / 1000
+
         except TypeError:
             end_time = end_time.timestamp()
 
@@ -418,13 +482,11 @@ def se_time(start_time=None, end_time=None, ago=None, span=None):
 
 
 class CityIq(object):
-    assets_search_suffix = '/v2/metadata/assets/search'
-    locations_search_suffix = '/v2/metadata/locations/search'
+    assets_search_suffix = '/api/v2/metadata/assets/search'
+    locations_search_suffix = '/api/v2/metadata/locations/search'
+    events_url_suffix = '/api/v2/event/locations/events'
 
-    events_url = '/v2/locations/events?bbox={bbox}&locationType={location_type}&eventType={event_type}&startTime={' \
-                 'start_time}&endTime={end_time}&pageSize=100'
-
-    def __init__(self, config=None, **kwargs):
+    def __init__(self, config=None, cache_metadata=True, **kwargs):
 
         if config:
             self.config = config
@@ -434,6 +496,10 @@ class CityIq(object):
         self._token = None
 
         self.tz = pytz.timezone(self.config.timezone)
+
+        self.cache = Path(self.config.cache_dir)
+
+        self.cache_metadata = cache_metadata
 
     @property
     def token(self):
@@ -472,8 +538,13 @@ class CityIq(object):
         try:
             r.raise_for_status()
         except Exception:
-            # print('url: ', url)
-            # print('headers: ', headers)
+            print('------')
+            print('url             : ', url)
+            print('request headers : ', headers)
+            print('status code     : ', r.status_code)
+            print('response headers: ', headers)
+            print('body            : ', r.text)
+            print('------')
             raise
 
         return r
@@ -524,20 +595,27 @@ class CityIq(object):
 
             page += 1
 
-    def get_assets(self, device_type=None, zone=None, bbox=None):
+    def get_assets(self, device_type=None, zone=None, bbox=None, use_cache=None):
 
         # A space ' ' is interpreted as querying for all records, while a blank '' is
         # an error.
+
+        use_cache = self.cache_metadata if use_cache is None else use_cache
+
         query = ('assetType', device_type if device_type is not None else ' ')
+
+        assets = []
 
         for e in self.get_pages(self.config.metadata_url + self.assets_search_suffix,
                                 query=query, zone=zone, bbox=bbox):
-            yield Asset(self, e)
+            assets.append(Asset(self, e))
+
+        return assets
 
     @property
     def assets(self):
         """Return all system assets"""
-        yield from self.get_assets(' ')
+        return self.get_assets(' ')
 
     @property
     def asset_dataframe(self):
@@ -548,27 +626,27 @@ class CityIq(object):
     @property
     def nodes(self):
         """Return all nodes"""
-        yield from self.get_assets('NODE')
+        return self.get_assets('NODE')
 
     @property
     def cameras(self):
         """Return camera assets"""
-        yield from self.get_assets('CAMERA')
+        return self.get_assets('CAMERA')
 
     @property
     def env_sensors(self):
         """Return environmental sensors"""
-        yield from self.get_assets('ENV_SENSOR')
+        return self.get_assets('ENV_SENSOR')
 
     @property
     def em_sensors(self):
         """Return some other kind of sensor. Electro-magnetic? """
-        yield from self.get_assets('EM_SENSOR')
+        return self.get_assets('EM_SENSOR')
 
     @property
     def mics(self):
         """Return microphone assets"""
-        yield from self.get_assets('MIC')
+        return self.get_assets('MIC')
 
     def get_locations(self, location_type=None, zone=None, bbox=None):
 
@@ -576,9 +654,25 @@ class CityIq(object):
         # an error.
         query = ('locationType', location_type if location_type is not None else ' ')
 
-        for e in self.get_pages(self.config.metadata_url + self.locations_search_suffix,
-                                query=query, zone=zone, bbox=bbox):
-            yield Location(self, e)
+        # FIXME! The cache files should expire after a few jours to a few days.
+        cache = self.cache.joinpath('locations-{}.json'.format(location_type))
+
+        if not cache.exists() or self.cache_metadata is False:
+            locations = []
+
+            for e in self.get_pages(self.config.metadata_url + self.locations_search_suffix,
+                                    query=query, zone=zone, bbox=bbox):
+                locations.append(e)
+
+            if self.cache_metadata:
+                with cache.open('w') as f:
+                    json.dump(locations, f)
+
+        else:
+            with cache.open() as f:
+                locations = json.load(f)
+
+        return [Location(self, e) for e in locations]
 
     @property
     def locations(self):
@@ -603,44 +697,53 @@ class CityIq(object):
 
     def _event_params(self, start_time, end_time, event_type, bbox=None):
 
-        bbox = bbox or self.config.bbox
-
-        if event_type in ('PKIN', 'PKOUT'):
-            zone = self.config.parking_zone
-            location_type = 'PARKING_ZONE'
-        elif event_type == 'PEDEVT':
-            location_type = 'WALKWAY'
-            zone = self.config.pedestrian_zone
-        elif event_type == 'TFEVT':
-            location_type = 'TRAFFIC_LANE'
-            zone = self.config.traffic_zone
-        else:
-            raise CityIqError("Unknown event type: '{}' ".format(event_type))
+        if bbox is None:  # it may also be False
+            bbox = self.config.bbox
 
         params = {
-            'bbox': bbox,
-            'locationType': location_type,
+            'locationType': EventType.event_to_location_type(event_type),
             'eventType': event_type,
             'startTime': start_time,
             'endTime': end_time,
             'pageSize': 20000
         }
 
-        return zone, params
+        if bbox:
+            params['bbox'] = bbox
 
-    def _events_page(self, start_time, end_time, bbox, event_type):
+        return params
 
-        events_url = '/v2/locations/events'
+    def _events(self, url, event_type, start_time, end_time, bbox=None):
+        from cityiq.api import EventType
 
-        zone, params = self._event_params(start_time, end_time, event_type, bbox=bbox)
+        page = 0
+        records = []
 
-        r = self.http_get(self.config.event_url + events_url, params=params, zone=zone)
+        while True:
 
-        try:
-            return r.json()
-        except Exception:
-            print(r.text)
-            raise
+            if event_type in ('PEDEVT', 'TFEVT'):
+                start_time -= 15 * 1000  # offset by averaging interval
+
+            params = self._event_params(start_time, end_time, event_type, bbox=bbox)
+
+            r = self.http_get(url, params=params, zone=EventType.event_to_zone(self.config, event_type))
+
+            try:
+                d = r.json()
+            except Exception:
+                print(r.text)
+                raise
+
+            content = d['content']
+            records += content
+            md = d['metaData']
+
+            if md['request_limit'] < md['totalRecords']:
+                page += 1
+                start_time = int(md['endTs'])
+
+            else:
+                return records
 
     def events(self, start_time=None, end_time=None, age=None, span=None, bbox=None, event_type=' '):
         """
@@ -653,47 +756,17 @@ class CityIq(object):
 
         start_time, end_time = se_time(start_time, end_time, age, span)
 
+        url = self.config.event_url + self.events_url_suffix
+
         logger.debug("Starting events start_time={} end_time={}, event_type={}".format(
             datetime.datetime.utcfromtimestamp(start_time / 1000),
             datetime.datetime.utcfromtimestamp(end_time / 1000),
             event_type
         ))
 
-        page = 0
-        while True:
+        bbox = bbox or self.config.bbox
 
-            data = self._events_page(start_time, end_time, bbox, event_type)
-
-            meta = data['metaData']
-
-            if len(data['content']) == 0:
-                break
-
-            min_ts = 2 ** 64
-            max_ts = 0
-
-            for i, e in enumerate(data['content']):
-                e['page'] = page
-                e['page_item'] = i
-                min_ts = min(min_ts, int(e['timestamp']))
-                max_ts = max(max_ts, int(e['timestamp']))
-                yield e
-
-            # If the end time is not the end time we asked for then
-            # run another request to get the rest of the events.
-            start_time_r, end_time_r = int(meta['startTs']), int(meta['endTs'])
-
-            assert (start_time_r == start_time)
-
-            # 3*60== three minutes, the approximate settling time of events.  ( Or so I'm told ... )
-            if end_time_r == end_time or min_ts == max_ts or (end_time - max_ts) / 1000 < 3 * 60:
-                break
-
-            assert end_time > end_time_r
-
-            start_time = max_ts  # end_time_r
-
-            page += 1
+        return self._events(url, event_type, start_time, end_time, bbox=bbox)
 
         logger.debug("Ending events")
 

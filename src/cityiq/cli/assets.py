@@ -36,7 +36,7 @@ def parse_args(args):
     parser.add_argument('-vv', '--very-verbose', dest="loglevel", help="set loglevel to DEBUG", action='store_const',
                         const=logging.DEBUG)
 
-    parser.add_argument('-c', '--config', help='Path to configuration file')
+    parser.add_argument('-C', '--config', help='Path to configuration file')
 
     group = parser.add_mutually_exclusive_group()
 
@@ -84,15 +84,14 @@ def main(args):
 
     c = CityIq(config)
 
-    if args.iterate:
-        for r in c.assets:
-            print(r.data)
-
-    elif args.csv:
-
+    if args.csv:
         df = c.pair()
 
         df.to_csv(args.pair)
+
+    else:
+        for r in c.nodes:
+            print(r.data)
 
 
 def run():

@@ -71,6 +71,7 @@ def parse_args(args):
     parser.add_argument('-c', '--config', help='Path to configuration file')
 
     parser.add_argument('-t', '--start-time', help='Starting time, in iso format. ')
+    parser.add_argument('-f', '--end-time', help='Ending time, in iso format. ')
 
     group = parser.add_mutually_exclusive_group()
 
@@ -78,7 +79,7 @@ def parse_args(args):
 
     group.add_argument('-l', '--list', help='List the cached files', action='store_true')
 
-    group.add_argument('-s', '--scrape', help='Scrape new events', action='store_true')
+    group.add_argument('-s', '--scrape', help="Scrape new events. Value is 'parking', 'ped' or 'traffic' ")
 
     group.add_argument('-S', '--split', help='Split scraped records into month and location files', action='store_true')
 
@@ -87,7 +88,7 @@ def parse_args(args):
 
     parser.add_argument('-e', '--event', action='append', help='Specify an event type for the scraper')
 
-    parser.add_argument('-T', '--threads', type=int, help='Number of threads to use for fetching data')
+    parser.add_argument('-T', '--threads', type=int, default=4, help='Number of threads to use for fetching data')
 
     return parser.parse_args(args)
 
@@ -111,17 +112,17 @@ def main(args):
       args ([str]): command line parameter list
     """
 
-    import datetime
+    from datetime import datetime, timezone
 
-    from cityiq import Config
-    from cityiq.scrape import EventScraper
+    from cityiq import Config, CityIq
+    from cityiq.scrape import EventScraper, LocationEventScraper
     from cityiq.scrape import logger as scrape_logger
     from dateutil.parser import parse as parse_dt
 
     args = parse_args(args)
     setup_logging(args.loglevel)
 
-    tz = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
+    tz = datetime.now(timezone.utc).astimezone().tzinfo
 
     if args.config:
         config = Config(args.config)
@@ -142,6 +143,12 @@ def main(args):
     print("Using config:", config._config_file)
 
     start_time = parse_dt(start_time_str).replace(tzinfo=tz)
+
+    if args.end_time:
+        end_time = parse_dt(args.end_time).replace(tzinfo=tz)
+    else:
+        # Only scrape up to the most recent full month
+        end_time = datetime.utcnow().replace(tzinfo=timezone.utc).astimezone(tz=None).replace(day=1)
 
     print(start_time)
 
@@ -164,11 +171,31 @@ def main(args):
 
         scrape_logger.setLevel(logging.DEBUG)
 
-        s.scrape_events()
+        c = CityIq(config)
+        if args.scrape == 'parking':
+            locations = list(c.parking_zones)  # Get all of the locations
+            events = ['PKIN', 'PKOUT']
+        elif args.scrape == 'ped':
+            locations = list(c.walkways)  # Get all of the locations
+            events = ['PEDEVT']
+        elif args.scrape == 'traffic':
+            locations = list(c.traffic_lanes)  # Get all of the locations
+            events = ['TFEVT']
+        else:
+            print("Error: -s argument must take one of 'parking', 'ped', 'traffic' ")
+            sys.exit(1)
+
+        s = LocationEventScraper(config, locations, events, start_time, end_time, max_workers=args.threads)
+
+        for result in s.get_events():
+            pass
+
+        print("Finished")
+        print(f"{s.processed} processed;  {s.wrote} wrote; {s.errors} errors; {s.existed} existed")
 
     elif args.split:
         print("Splitting scraped files")
-        s.run_split_locations(use_tqdm=True)
+        s.split_locations(use_tqdm=True)
 
     elif args.normalize:
 
