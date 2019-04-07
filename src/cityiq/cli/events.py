@@ -75,9 +75,9 @@ def parse_args(args):
 
     group = parser.add_mutually_exclusive_group()
 
-    group.add_argument('-i', '--iterate', help='Iterate over stored events returning JSON lines', action='store_true')
+    group.add_argument('-i', '--iterate', help='Iterate over stored events returning JSON lines')
 
-    group.add_argument('-l', '--list', help='List the cached files', action='store_true')
+    group.add_argument('-l', '--list', help='List the cached files. Same options as scrape, or "all" ')
 
     group.add_argument('-s', '--scrape', help="Scrape new events. Value is 'parking', 'ped' or 'traffic' ")
 
@@ -115,7 +115,7 @@ def main(args):
     from datetime import datetime, timezone
 
     from cityiq import Config, CityIq
-    from cityiq.scrape import EventScraper, LocationEventScraper
+    from cityiq.scrape import LocationEventScraper
     from cityiq.scrape import logger as scrape_logger
     from dateutil.parser import parse as parse_dt
 
@@ -150,28 +150,46 @@ def main(args):
         # Only scrape up to the most recent full month
         end_time = datetime.utcnow().replace(tzinfo=timezone.utc).astimezone(tz=None).replace(day=1)
 
-    print(start_time)
-
     if not args.event:
         args.event = ['PKIN', 'PKOUT']
 
-    s = EventScraper(config, start_time, args.event, max_workers=args.threads)
-
     if args.iterate:
-        for r in s.iterate_records():
-            print(r)
+        if args.iterate == 'parking':
+            events = ['PKIN', 'PKOUT']
+        elif args.iterate == 'ped':
+            events = ['PEDEVT']
+        elif args.iterate == 'traffic':
+            events = ['TFEVT']
+        elif args.iterate == 'all':
+            events = None
+
+        s = LocationEventScraper(config, None, events, start_time, end_time)
+
+        for loc in s.generate_rows():
+            print(loc)
 
     elif args.list:
 
-        for st, fn_path, exists in s.yield_file_names():
-            if exists:
-                print(st, fn_path)
+        if args.list == 'parking':
+            events = ['PKIN', 'PKOUT']
+        elif args.list == 'ped':
+            events = ['PEDEVT']
+        elif args.list == 'traffic':
+            events = ['TFEVT']
+        elif args.list == 'all':
+            events = None
+
+        s = LocationEventScraper(config, None, events, start_time, end_time)
+
+        for loc in s.list():
+            print(loc)
 
     elif args.scrape:
 
         scrape_logger.setLevel(logging.DEBUG)
 
         c = CityIq(config)
+
         if args.scrape == 'parking':
             locations = list(c.parking_zones)  # Get all of the locations
             events = ['PKIN', 'PKOUT']
@@ -193,12 +211,8 @@ def main(args):
         print("Finished")
         print(f"{s.processed} processed;  {s.wrote} wrote; {s.errors} errors; {s.existed} existed")
 
-    elif args.split:
-        print("Splitting scraped files")
-        s.split_locations(use_tqdm=True)
-
     elif args.normalize:
-
+        raise NotImplementedError()
         from cityiq.clean_events import clean_events
 
         df = clean_events(s)
