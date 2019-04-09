@@ -380,18 +380,21 @@ class PedLocationEventScraper(LocationEventScraper):
 
         return list(_yield_file_names())
 
-    def cached_dataframe(self):
+    def cached_dataframe(self, limit=None):
 
         from tqdm.autonotebook import tqdm
         import pandas as pd
 
         frames = []
 
-        for l in tqdm(self.locations, desc='Concat dataframe'):
+        for i, l in enumerate(tqdm(self.locations, desc='Concat dataframe')):
 
             fn = self.make_csv_file_name(l, 'PEDEVT')
 
             if fn.exists():
-                frames.append(pd.read_csv(fn))
+                frames.append(pd.read_csv(fn, dtype={'location_uid': str}))
+
+                if limit is not None and i > limit:
+                    break
 
         return pd.concat(frames).reset_index()
