@@ -13,14 +13,18 @@ Installation
 
 Use pip::
 
-    pip install cityiq
+    $ pip install cityiq
 
 Configuration
 =============
 
 The program requires a configuration file that hold credentials and urls. You can generate a default configuration with ::
 
-    ciq_config  -w
+    $ ciq_config  -w
+
+Or, to write the config to ``~/.city-iq.yaml ::
+
+    $ ciq_config -wu
 
 The generated file is configured for the San Diego system. To you this system , you will just need to add your client id and secret.
 
@@ -34,8 +38,12 @@ The code will look for this file in several places in this order:
 Use
 ===
 
-After generating a config file you can run the ``ciq_events`` program to get event records. See the documentation for
-Scraping_ for more information.
+After generating a config file you can run the ``ciq_`` programs to get events, assets and locations. The ``ciq_assets``
+will list all of the system assets as JSON lines::
+
+    $ ciq_assets
+
+
 
 The Documentation_ has more details, but not much more.
 

@@ -39,14 +39,18 @@ def grouper(n, iterable):
 class LocationEventScraper(object):
     '''Scrape events by location. Faster '''
 
-    location_sub_dir = 'location-event-scrape'
+    location_sub_dir = 'location'
 
     def __init__(self, config, locations, event_types, start_time, end_time, max_workers=4,
                  pre_cb=None, post_cb=None):
 
         from concurrent.futures import ThreadPoolExecutor
 
-        self._locations = locations
+        if locations:
+            self._locations = locations if isinstance(locations, (list, tuple)) else [locations]
+        else:
+            self._locations = None
+
         self.config = config
         self.start_time = start_time
         self.end_time = end_time
@@ -56,36 +60,42 @@ class LocationEventScraper(object):
 
         self.event_types = event_types
 
-        self.cache = Path(self.config.events_cache)
-
         self.max_workers = max_workers
 
         self.pool = ThreadPoolExecutor(max_workers=max_workers)
 
-        if not self.cache.exists() or not self.cache.is_dir():
-            raise CityIq("The cache dir ('{}') must exist and be a directory".format(self.cache))
-
-        self.pre_cb = pre_cb or self.pre_cb
-        self.post_cb = post_cb or self.post_cb
+        self.pre_cb = self.make_task_path if pre_cb is None else pre_cb
+        self.post_cb = self.write_results if post_cb is None else post_cb
 
         self.processed = 0
         self.wrote = 0
         self.errors = 0
         self.existed = 0
 
-        self.err_dir = Path(self.config.cache_dir).joinpath('scrape_errors')
+        self.err_dir = Path(self.config.cache['errors']).joinpath('scrape_errors')
         self.err_dir.mkdir(parents=True, exist_ok=True)
+
+    def _event_type_to_locations(self, c,  events):
+
+        if set(events) & {'PKIN','PKOUT'}:
+            locations = list(c.parking_zones)  # Get all of the locations
+        elif set(events) & {'PEDEVT'}:
+            locations = list(c.walkways)  # Get all of the locations
+        elif set(events) & {'TFEVT'}:
+            locations = list(c.traffic_lanes)  # Get all of the locations
+        else:
+            locations = []
+
+        return locations
 
     @property
     def locations(self):
-        if self._locations:
-            if not isinstance(self._locations, (list, tuple)):
-                return [self._locations]
-            else:
-                return self._locations
 
-        else:
-            return self.list_locations()
+        if not self._locations:
+            c = CityIq(self.config)
+            return self._event_type_to_locations(c, self.event_types)
+
+        return self._locations
 
     def request_months(self):
         """Generate task and file names"""
@@ -119,7 +129,7 @@ class LocationEventScraper(object):
             if self.pre_cb:
                 token = self.pre_cb(task_id, location, event_type, start_time, end_time)
                 if token is False:  # The file has already been fetched. Carry on.
-                    return False
+                    return False, False, False
             else:
                 token = None
 
@@ -168,7 +178,7 @@ class LocationEventScraper(object):
             if self.post_cb:
                 self.post_cb(task_id, token, d)
 
-            return d
+            return task_id, token, d
 
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(self.pool, _fetch_events, location, event_type, start_time, end_time)
@@ -185,8 +195,9 @@ class LocationEventScraper(object):
                     yield location, st, et, event_type
 
     def make_file_name(self, locationUid, start, event_type):
-        return Path(self.config.cache_dir).joinpath(self.location_sub_dir, '{}/{}/{}-{}.json'
-                                                    .format(locationUid, start.year, start.month, event_type))
+        prefix = locationUid[:2] if locationUid else 'none'
+        return Path(self.config.cache['objects']).joinpath(self.location_sub_dir, '{}/{}/{}/{}-{}.json'
+                                                    .format(prefix,locationUid, start.year, start.month, event_type))
 
     def make_csv_file_name(self, locationUid, event_type):
         return Path(self.config.cache_dir).joinpath(self.location_sub_dir, '{}/{}.csv'
@@ -231,7 +242,10 @@ class LocationEventScraper(object):
             results = loop.run_until_complete(self._get_events(locations))
             yield from results
 
-    def pre_cb(self, ask_id, location, event_type, start_time, end_time):
+    def make_task_path(self, task_id, location, event_type, start_time, end_time):
+        """Create a task path for writing the results of the task, and return
+        it if it does not exist. If it does, return False"""
+
         p = self.make_file_name(location.locationUid, start_time, event_type)
 
         self.processed += 1
@@ -243,33 +257,37 @@ class LocationEventScraper(object):
         else:
             return p
 
-    def post_cb(self, task_id, p, result):
+    def write_results(self, task_id, token, result):
 
         try:
-            p.parent.mkdir(parents=True, exist_ok=True)
+            token.parent.mkdir(parents=True, exist_ok=True)
         except FileExistsError:
             # Another thread may have created the directory
             pass
+        except AttributeError:
+            raise # The token is not a Path
 
         last_exc = None
         for i in range(3):
             try:
-                with p.open('w') as f:
+                with token.open('w') as f:
                     json.dump(result, f, default=json_serial)
                     break
             except FileNotFoundError:
                 # Not sure what's going on with this error
 
-                logger.error(f"File Not Found Error for {str(p)}")
+                logger.error(f"File Not Found Error for {str(token)}")
                 sleep(5)
 
         else:
             raise last_exc
 
         self.wrote += 1
-        logger.info("{} wrote".format(str(p)))
+        logger.info("{} wrote".format(str(token)))
 
-    def list_locations(self):
+
+
+    def list_extant_locations(self):
         '''Return all of the locations that have been previously downloaded for at least one monthly event file'''
 
         p = Path(self.config.cache_dir).joinpath(self.location_sub_dir)
@@ -278,12 +296,11 @@ class LocationEventScraper(object):
 
     def list(self):
 
-        p = Path(self.config.cache_dir).joinpath(self.location_sub_dir)
-
         if self.event_types and self.event_types[0]:
             yield from self.generate_file_names()
 
         else:
+            p = Path(self.config.cache_dir).joinpath(self.location_sub_dir)
             yield from p.glob('**/*.json')
 
     def generate_records(self, locations=None):

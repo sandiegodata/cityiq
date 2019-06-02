@@ -21,16 +21,20 @@ video_zone: SD-IE-VIDEO
 image_zone: SD-IE-IMAGE
 
 # Urls
-uaa_url: https://624eff02-dbb1-4c6c-90bc-fa85a29e5fa8.predix-uaa.run.aws-usw02-pr.ice.predix.io
-metadata_url: https://ic-metadata-service-sandiego.run.aws-usw02-pr.ice.predix.io
-media_url: https://ic-media-service-sandiego.run.aws-usw02-pr.ice.predix.io
-event_url: https://ic-event-service-sandiego.run.aws-usw02-pr.ice.predix.io
-websocket_url : wss://ic-websocket-service-sandiego.run.aws-usw02-pr.ice.predix.io
+uaa_url: https://auth.aa.cityiq.io
+metadata_url: https://sandiego.cityiq.io
+#media_url: https://sandiego.cityiq.io/api/v2/media/ondemand/assets
+#event_url: https://sandiego.cityiq.io/api/v2/event/assets
+event_url: https://sandiego.cityiq.io
+websocket_url: wss://sandiego.cityiq.io/api/v2/websocket/events
 
 # Start time for scraping and processing
 start_time: 20180901T00:00:00
 timezone: US/Pacific
 
 # Caches for storing events and processed events
-events_cache: /tmp
-cache_dir: /tmp
+cache:
+    token:     /tmp/cityiq/tokens
+    meta:      /tmp/cityiq//meta
+    objects: /tmp/cityiq/objects
+    errors:    /tmp/cityiq/errors

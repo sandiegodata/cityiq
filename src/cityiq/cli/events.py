@@ -1,38 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-""" The ciq_events program is used to scrape and process events. To properly
-run the program, two directories should be specified in the configuration:
-
-- ``events_cache``: The directory where hourly event fiels will be specified
-- ``cache_dir``: The directory where processed event files will be written.
-
-To scrape events from the API, run :option:`ciq_events --scrape --start_time
-<isotime>`. If ``<isotime>`` is omitted, the program will start from the
-``start_time`` specified in the config. This will download events from the
-start time in hourly batches, and save one file per hour.
-
-To process events, first break up the hourly event files by location with
-:option:`ciq_events --split` command. This will create one CSV file per
-location per month. Then, re-combine and renormalize the data with
-:option:`ciq_events --normalize`, which will write a CSV file to the local directory.
-
-The final output file will have columns for `delta`, which is the number of
-cars that went into or out of a parking zone per 15 minute interval. However,
-there are a lot of suprious events, so the `delta_norm` has a normalized value
-that tries to remove the spurious events.
-
-These programs can produce a lot of data. For the San Diego system, the
-extracted PKIN and PKOUT events for September 2018 through Feb 2019 is 21GB,
-and the download process takes several days. The final processed CSV file, with
-records at 15 minute intervals, is about 81MB and akes about an hour to process.
-
-For instance:
-
-.. code-block:: bash
-
-    $ ciq_events -s -e PKIN -e PKOUT -t 20190901
-    $ ciq_events -S
-    $ ciq_events -n
+""" The ciq_events program is used to scrape and process events.
 
 """
 
@@ -70,23 +38,19 @@ def parse_args(args):
 
     parser.add_argument('-c', '--config', help='Path to configuration file')
 
-    parser.add_argument('-t', '--start-time', help='Starting time, in iso format. ')
+    parser.add_argument('-t', '--start-time', help='Starting time, in iso format. If not specified, use the '
+                                                   "configuration value 'start_time' ")
     parser.add_argument('-f', '--end-time', help='Ending time, in iso format. ')
 
     group = parser.add_mutually_exclusive_group()
+
+    group.add_argument('-e', '--enumerate', help='List the files that will be crated by a complete scrape')
 
     group.add_argument('-i', '--iterate', help='Iterate over stored events returning JSON lines')
 
     group.add_argument('-l', '--list', help='List the cached files. Same options as scrape, or "all" ')
 
     group.add_argument('-s', '--scrape', help="Scrape new events. Value is 'parking', 'ped' or 'traffic' ")
-
-    group.add_argument('-S', '--split', help='Split scraped records into month and location files', action='store_true')
-
-    group.add_argument('-n', '--normalize', help='Dedupe and normalize',
-                       action='store_true')
-
-    parser.add_argument('-e', '--event', action='append', help='Specify an event type for the scraper')
 
     parser.add_argument('-T', '--threads', type=int, default=4, help='Number of threads to use for fetching data')
 
@@ -103,6 +67,39 @@ def setup_logging(loglevel):
 
     logging.basicConfig(level=loglevel, stream=sys.stdout,
                         format=logformat, datefmt="%Y-%m-%d %H:%M:%S")
+
+
+def group_to_events(group):
+
+    if group == 'parking':
+        events = ['PKIN', 'PKOUT']
+    elif group == 'ped':
+        events = ['PEDEVT']
+    elif group == 'traffic':
+        events = ['TFEVT']
+    elif group == 'all':
+        events = None
+    else:
+        print("ERROR: Unkown event group: {} ".format(group))
+        sys.exit(1)
+
+
+    return events
+
+def group_to_locations(c, group):
+
+    if group == 'parking':
+        locations = list(c.parking_zones)  # Get all of the locations
+    elif group == 'ped':
+        locations = list(c.walkways)  # Get all of the locations
+        events = ['PEDEVT']
+    elif group == 'traffic':
+        locations = list(c.traffic_lanes)  # Get all of the locations
+    else:
+        locations = []
+
+    return locations
+
 
 
 def main(args):
@@ -150,84 +147,66 @@ def main(args):
         # Only scrape up to the most recent full month
         end_time = datetime.utcnow().replace(tzinfo=timezone.utc).astimezone(tz=None).replace(day=1)
 
-    if not args.event:
-        args.event = ['PKIN', 'PKOUT']
+    if args.enumerate:
 
-    if args.iterate:
-        if args.iterate == 'parking':
-            events = ['PKIN', 'PKOUT']
-        elif args.iterate == 'ped':
-            events = ['PEDEVT']
-        elif args.iterate == 'traffic':
-            events = ['TFEVT']
-        elif args.iterate == 'all':
-            events = None
+        s = LocationEventScraper(config, None, group_to_events(args.enumerate), start_time, end_time)
 
-        s = LocationEventScraper(config, None, events, start_time, end_time)
+        for loc in s.generate_file_names(): #s.list():
+            print(loc)
 
-        for loc in s.generate_rows():
+    elif args.iterate:
+
+        s = LocationEventScraper(config, None, group_to_events(args.iterate), start_time, end_time)
+
+        for loc in s.generate_records():
             print(loc)
 
     elif args.list:
 
-        if args.list == 'parking':
-            events = ['PKIN', 'PKOUT']
-        elif args.list == 'ped':
-            events = ['PEDEVT']
-        elif args.list == 'traffic':
-            events = ['TFEVT']
-        elif args.list == 'all':
-            events = None
+        s = LocationEventScraper(config, None, group_to_events(args.list), start_time, end_time)
 
-        s = LocationEventScraper(config, None, events, start_time, end_time)
-
-        for loc in s.list():
+        for loc in s.generate_file_names(): #s.list():
             print(loc)
 
     elif args.scrape:
 
-        scrape_logger.setLevel(logging.DEBUG)
+        #scrape_logger.setLevel(logging.DEBUG)
 
         c = CityIq(config)
 
-        if args.scrape == 'parking':
-            locations = list(c.parking_zones)  # Get all of the locations
-            events = ['PKIN', 'PKOUT']
-        elif args.scrape == 'ped':
-            locations = list(c.walkways)  # Get all of the locations
-            events = ['PEDEVT']
-        elif args.scrape == 'traffic':
-            locations = list(c.traffic_lanes)  # Get all of the locations
-            events = ['TFEVT']
-        else:
-            print("Error: -s argument must take one of 'parking', 'ped', 'traffic' ")
-            sys.exit(1)
+        events = group_to_events(args.scrape)
+        locations = group_to_locations(c, args.scrape)
 
-        s = LocationEventScraper(config, locations, events, start_time, end_time, max_workers=args.threads)
+        print('Starting')
 
-        for result in s.get_events():
-            pass
+        from time import time
+        lt = st = time()
+        count = 0
+        skipped = 0
+
+        s = LocationEventScraper(config, locations, events, start_time, end_time, max_workers=args.threads,
+                                 post_cb=False)
+
+        for i, result in enumerate(s.get_events()):
+
+            if time() - lt > 10:
+                lt = time()
+                delta_t = time() - st
+                print('Wrote {}, {}/sec; skipped {} '.format(count, round((count / delta_t)), skipped ))
+
+            if result[0] is False:
+                skipped +=1
+                continue
+
+            s.write_results(*result)
+            count += 1
+
+
 
         print("Finished")
         print(f"{s.processed} processed;  {s.wrote} wrote; {s.errors} errors; {s.existed} existed")
 
-    elif args.normalize:
-        raise NotImplementedError()
-        from cityiq.clean_events import clean_events
 
-        df = clean_events(s)
-
-        t_min, t_max = df.index.min(), df.index.max()
-
-        fn = "cityiq-{}-{}-{}.csv".format(
-            '_'.join(sorted(args.event)),
-            "{}{:02d}{:02d}".format(t_min.year, t_min.month, t_min.day),
-            "{}{:02d}{:02d}".format(t_max.year, t_max.month, t_min.day),
-        )
-
-        df.to_csv(fn)
-
-        print("Wrote ", fn)
 
 
 def run():

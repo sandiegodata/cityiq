@@ -82,7 +82,7 @@ def main(args):
 
     print("Using config:", config._config_file)
 
-    c = CityIq(config, cache_metadata=False)
+    c = CityIq(config, cache_metadata=True)
 
     if args.csv:
         df = c.pair()

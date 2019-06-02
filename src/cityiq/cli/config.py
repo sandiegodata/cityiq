@@ -33,7 +33,13 @@ def parse_args(args):
 
     group = parser.add_mutually_exclusive_group()
 
-    group.add_argument('-w', '--write', help='Write a new default config file. ', action='store_true')
+    group.add_argument('-w', '--write', help='Write a new default config file to the current directory ', action='store_true')
+
+    parser.add_argument('-u', '--user', help="With --write, write to the user's home directory",
+                       action='store_true')
+
+    parser.add_argument('-F', '--force', help="With --write, force overwritting",
+                        action='store_true')
 
     group.add_argument('-p', '--print', help='Print the config file', action='store_true')
 
@@ -59,11 +65,17 @@ def main(args):
         with p.open() as f:
             d = f.read()
 
-        fn = 'city-iq.yaml'
+        if args.user:
+            fn = Path('~/.city-iq.yaml').expanduser()
+        else:
+            fn = Path('./city-iq.yaml').resolve()
 
-        if Path(fn).exists():
-            print("Error: {} exists, not overwritting".format(fn))
-            sys.exit(1)
+        if fn.exists():
+            if args.force:
+                fn.unlink()
+            else:
+                print("Error: {} exists, not overwritting".format(fn))
+                sys.exit(1)
 
         with open(fn, 'w') as f:
             f.write(d)

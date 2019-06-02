@@ -497,9 +497,13 @@ class CityIq(object):
 
         self.tz = pytz.timezone(self.config.timezone)
 
-        self.cache = Path(self.config.cache_dir)
-
         self.cache_metadata = cache_metadata
+
+        self.metadata_cache = Path(self.config.cache['meta'])
+
+        if self.cache_metadata and not self.metadata_cache.is_dir():
+            raise ConfigurationError("Metadata cache '{}' is not a directory ".format(self.metadata_cache))
+
 
     @property
     def token(self):
@@ -560,6 +564,7 @@ class CityIq(object):
         if query:
             params['q'] = "{}:{}".format(*query)
 
+        logger.debug("CityIq: get_page url={} page={}".format(url, str(page)))
         r = self.http_get(url, zone, params)
 
         return r.json()
@@ -654,23 +659,11 @@ class CityIq(object):
         # an error.
         query = ('locationType', location_type if location_type is not None else ' ')
 
-        # FIXME! The cache files should expire after a few jours to a few days.
-        cache = self.cache.joinpath('locations-{}.json'.format(location_type))
+        locations = []
 
-        if not cache.exists() or self.cache_metadata is False:
-            locations = []
-
-            for e in self.get_pages(self.config.metadata_url + self.locations_search_suffix,
-                                    query=query, zone=zone, bbox=bbox):
-                locations.append(e)
-
-            if self.cache_metadata:
-                with cache.open('w') as f:
-                    json.dump(locations, f)
-
-        else:
-            with cache.open() as f:
-                locations = json.load(f)
+        for e in self.get_pages(self.config.metadata_url + self.locations_search_suffix,
+                                query=query, zone=zone, bbox=bbox):
+            locations.append(e)
 
         return [Location(self, e) for e in locations]
 

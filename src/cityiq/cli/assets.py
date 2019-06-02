@@ -66,7 +66,8 @@ def main(args):
       args ([str]): command line parameter list
     """
 
-    from cityiq import Config, CityIq
+    from cityiq import Config, CityIq, AuthenticationError
+
 
     args = parse_args(args)
     setup_logging(args.loglevel)
@@ -82,16 +83,21 @@ def main(args):
 
     print("Using config:", config._config_file)
 
-    c = CityIq(config)
+    c = CityIq(config, cache_metadata=args.force)
 
-    if args.csv:
-        df = c.pair()
+    try:
+        if args.csv:
+            df = c.pair()
 
-        df.to_csv(args.pair)
+            df.to_csv(args.pair)
 
-    else:
-        for r in c.nodes:
-            print(r.data)
+        else:
+            for r in c.nodes:
+                print(r.data)
+    except AuthenticationError:
+        print("ERROR: Authentication failed. Check your username and password, or the authentication UAA url")
+        sys.exit(1)
+
 
 
 def run():

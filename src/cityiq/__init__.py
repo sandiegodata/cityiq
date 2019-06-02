@@ -11,3 +11,5 @@ finally:
     del get_distribution, DistributionNotFound
 
 from .api import Config, CityIq, CityIqError   # noqa
+
+from .exceptions import  *

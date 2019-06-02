@@ -9,6 +9,8 @@ import logging
 from binascii import crc32
 from pathlib import Path
 from time import time
+from requests import HTTPError
+from .exceptions import AuthenticationError
 
 import requests
 
@@ -104,6 +106,13 @@ def _get_token(uaa, client, secret):
 
     response = requests.post(uaa, headers=headers, data=params)
 
-    response.raise_for_status()
+    try:
+        response.raise_for_status()
+    except HTTPError as e:
+        if e.response.status_code == 401:
+            raise AuthenticationError() from e
+        else:
+            raise
+
 
     return response.json()

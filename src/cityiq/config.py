@@ -81,7 +81,7 @@ class Config(object):
         for p in self._paths:
             if p.exists():
                 with p.open() as f:
-                    c = yaml.load(f)
+                    c = yaml.safe_load(f)
                     if c:
                         c['_config_file'] = str(p)
                     return c
