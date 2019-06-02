@@ -21,7 +21,7 @@ docker run --rm -v $NFS_VOL_NAME:$NFS_LOCAL_MNT busybox ls $NFS_LOCAL_MNT
 -----
 
 docker volume create --driver local \
-  --opt type=nfs --opt o=addr=nas1,vers=4,soft \
-  --opt device=:main nas1-main
+  --opt type=nfs --opt o=addr=nas2,vers=4,soft \
+  --opt device=:cache nas2-cache
 
-docker run --rm -v nas1-main:/data busybox ls /data
+docker run --rm -v nas2-cache:/data busybox ls /data

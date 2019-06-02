@@ -501,6 +501,8 @@ class CityIq(object):
 
         self.metadata_cache = Path(self.config.cache['meta'])
 
+        self.metadata_cache.mkdir(exist_ok=True, parents=True)
+
         if self.cache_metadata and not self.metadata_cache.is_dir():
             raise ConfigurationError("Metadata cache '{}' is not a directory ".format(self.metadata_cache))
 

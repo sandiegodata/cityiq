@@ -15,6 +15,6 @@ RUN pip install --no-cache git+https://github.com/sandiegodata/cityiq #2
 
 RUN adduser -D -u ${NB_UID} -G ${NB_GROUP}  ${NB_USER}
 
-ADD city-iq.yaml $USER/.city-iq.yaml
+ADD city-iq.yaml /home/$NB_USER/.city-iq.yaml
 
 USER ${NB_USER}
