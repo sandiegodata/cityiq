@@ -22,7 +22,7 @@ The program requires a configuration file that hold credentials and urls. You ca
 
     $ ciq_config  -w
 
-Or, to write the config to ``~/.city-iq.yaml ::
+Or, to write the config to ``~/.city-iq.yaml`` ::
 
     $ ciq_config -wu
 
