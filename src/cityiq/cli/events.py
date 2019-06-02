@@ -68,6 +68,8 @@ def setup_logging(loglevel):
     logging.basicConfig(level=loglevel, stream=sys.stdout,
                         format=logformat, datefmt="%Y-%m-%d %H:%M:%S")
 
+    _logger.setLevel(loglevel)
+
 
 def group_to_events(group):
 
@@ -92,7 +94,6 @@ def group_to_locations(c, group):
         locations = list(c.parking_zones)  # Get all of the locations
     elif group == 'ped':
         locations = list(c.walkways)  # Get all of the locations
-        events = ['PEDEVT']
     elif group == 'traffic':
         locations = list(c.traffic_lanes)  # Get all of the locations
     else:
@@ -117,7 +118,9 @@ def main(args):
     from dateutil.parser import parse as parse_dt
 
     args = parse_args(args)
-    setup_logging(args.loglevel)
+
+    if args.loglevel:
+        setup_logging(args.loglevel)
 
     tz = datetime.now(timezone.utc).astimezone().tzinfo
 
@@ -201,6 +204,7 @@ def main(args):
             s.write_results(*result)
             count += 1
 
+            _logger.info(result[1])
 
 
         print("Finished")
