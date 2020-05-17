@@ -52,3 +52,11 @@ class TestConfig(CityIQTest):
 
         del environ['CITYIQ_CLIENT_ID']
         print(c.client_id)
+
+    def test_override_cache(self):
+
+        c1 = self.test_data('config3.yaml')
+        c = Config(c1)
+
+        print(c.cache_objects)
+        print(c['cache_objects'])

@@ -3,15 +3,22 @@
 """
 
 import logging
+import pytz
+from datetime import datetime
 
 from cityiq.api import CityIq
 from cityiq.api import logger as api_logger
 from cityiq.config import Config
 from cityiq.scrape import logger as scrape_logger
 from cityiq.token import logger as token_logger
+from cityiq.scrape import AsyncFetchRunner
 
 from .support import CityIQTest
 
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
+config = Config(cache_objects='/tmp/object/')
 
 class TestBasic(CityIQTest):
 
@@ -161,3 +168,53 @@ class TestBasic(CityIQTest):
         s = LocationEventScraper(config, locations, 'PKIN', start_time, end_time, max_workers=4)
         for r in s.get_events():
             print(len(r))
+
+
+    def test_get_asset(self):
+
+        c = CityIq(config)
+
+        l = c.get_asset('99b3cf15-cf73-459e-8811-904224c3dfd5')
+
+        print(l)
+
+
+    def test_bicycle_events(self):
+
+        c = CityIq(config)
+
+        l = c.get_asset('99b3cf15-cf73-459e-8811-904224c3dfd5')
+
+        print(l)
+
+        start = c.tz.localize(datetime(2019, 1, 1, 0, 0, 0))
+        end = c.tz.localize(datetime(2019, 1, 31, 0, 0, 0))
+
+        print(l.get_events( 'BICYCLE', '2020-04-01', '2020-04-02'))
+
+
+    def test_bicycle_events_ft(self):
+
+        c = CityIq(config)
+
+        l = c.get_asset('99b3cf15-cf73-459e-8811-904224c3dfd5')
+
+        print(l)
+
+        start = c.tz.localize(datetime(2020, 4, 1, 0, 0, 0))
+        end = c.tz.localize(datetime(2020, 4, 2, 0, 0, 0))
+
+        ft = l.get_fetch_task('BICYCLE', start, end)
+
+        ft.run()
+        
+    def test_bicycle_events_async(self):
+
+        c = CityIq(config)
+
+        l = [ e for e in c.get_assets() if 'BICYCLE' in e.eventTypes ]
+
+        start = c.tz.localize(datetime(2020, 4, 1, 0, 0, 0))
+        end = c.tz.localize(datetime(2020, 4, 6, 0, 0, 0))
+
+

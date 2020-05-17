@@ -1,0 +1,6 @@
+
+cache:
+  errors: /Volumes/SSD_Extern/cityiq/errors
+  meta: /Volumes/SSD_Extern/cityiq/meta
+  objects: /Volumes/SSD_Extern/cityiq/objects
+  token: /Volumes/SSD_Extern/cityiq/tokens

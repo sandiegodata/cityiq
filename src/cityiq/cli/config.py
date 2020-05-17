@@ -28,7 +28,7 @@ def parse_args(args):
       :obj:`argparse.Namespace`: command line parameters namespace
     """
     parser = argparse.ArgumentParser(
-        description="Create a config file")
+        description="Create or print a CityIq module configuration file")
     parser.add_argument('--version', action='version', version='cityiq {ver}'.format(ver=__version__))
 
     group = parser.add_mutually_exclusive_group()

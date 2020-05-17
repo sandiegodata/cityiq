@@ -15,7 +15,7 @@ ARG NB_GID="100"
 RUN apk add git
 RUN pip install --upgrade pip
 RUN pip install --no-cache pytz pyyaml python-dateutil
-RUN pip install --no-cache git+https://github.com/sandiegodata/cityiq #3
+RUN pip install --no-cache git+https://github.com/sandiegodata/cityiq #4
 
 
 RUN adduser -D -u ${NB_UID} -G ${NB_GROUP}  ${NB_USER}

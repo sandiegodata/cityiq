@@ -9,7 +9,8 @@ import logging
 import sys
 
 from cityiq import __version__
-
+from cityiq.cli.util import group_to_events, group_to_locations
+import json
 __author__ = "Eric Busboom"
 __copyright__ = "Eric Busboom"
 __license__ = "mit"
@@ -39,12 +40,14 @@ def parse_args(args):
     parser.add_argument('-c', '--config', help='Path to configuration file')
 
     parser.add_argument('-t', '--start-time', help='Starting time, in iso format. If not specified, use the '
-                                                   "configuration value 'start_time' ")
+                                                    "configuration value 'start_time' ")
     parser.add_argument('-f', '--end-time', help='Ending time, in iso format. ')
+
+    parser.add_argument('-L', '--last_month', action='store_true', help='Scrape only the last month, overwriting and existing data')
 
     group = parser.add_mutually_exclusive_group()
 
-    group.add_argument('-e', '--enumerate', help='List the files that will be crated by a complete scrape')
+    group.add_argument('-e', '--enumerate', help='List the files that will be created by a complete scrape')
 
     group.add_argument('-i', '--iterate', help='Iterate over stored events returning JSON lines')
 
@@ -71,39 +74,15 @@ def setup_logging(loglevel):
     _logger.setLevel(loglevel)
 
 
-def group_to_events(group):
-
-    if group == 'parking':
-        events = ['PKIN', 'PKOUT']
-    elif group == 'ped':
-        events = ['PEDEVT']
-    elif group == 'traffic':
-        events = ['TFEVT']
-    elif group == 'all':
-        events = None
-    else:
-        print("ERROR: Unkown event group: {} ".format(group))
-        sys.exit(1)
-
-
-    return events
-
-def group_to_locations(c, group):
-
-    if group == 'parking':
-        locations = list(c.parking_zones)  # Get all of the locations
-    elif group == 'ped':
-        locations = list(c.walkways)  # Get all of the locations
-    elif group == 'traffic':
-        locations = list(c.traffic_lanes)  # Get all of the locations
-    else:
-        locations = []
-
-    return locations
-
-
-
 def main(args):
+
+    try:
+        _main(args)
+    except (BrokenPipeError, KeyboardInterrupt):
+        pass
+
+
+def _main(args):
     """Main entry point allowing external calls
 
     Args:
@@ -114,8 +93,9 @@ def main(args):
 
     from cityiq import Config, CityIq
     from cityiq.scrape import LocationEventScraper
-    from cityiq.scrape import logger as scrape_logger
+    from cityiq.iterate import EventIterator, ParkingIterator, PedestrianIterator
     from dateutil.parser import parse as parse_dt
+
 
     args = parse_args(args)
 
@@ -152,17 +132,25 @@ def main(args):
 
     if args.enumerate:
 
-        s = LocationEventScraper(config, None, group_to_events(args.enumerate), start_time, end_time)
+        s = LocationEventScraper(config, None, group_to_events(args.enumerate),
+                                 'last' if args.last_month else start_time,
+                                 'last' if args.last_month else end_time,
+                                 )
 
         for loc in s.generate_file_names(): #s.list():
             print(loc)
 
     elif args.iterate:
 
-        s = LocationEventScraper(config, None, group_to_events(args.iterate), start_time, end_time)
+        if args.iterate == 'ped':
+            s = PedestrianIterator(config, None, start_time, end_time)
+        elif args.iterate == 'parking':
+            s = ParkingIterator(config, None, start_time, end_time)
+        else:
+            s = EventIterator(config, group_to_events(args.iterate), None, start_time, end_time)
 
-        for loc in s.generate_records():
-            print(loc)
+        for loc in s:
+            print(json.dumps(loc))
 
     elif args.list:
 
@@ -187,7 +175,10 @@ def main(args):
         count = 0
         skipped = 0
 
-        s = LocationEventScraper(config, locations, events, start_time, end_time, max_workers=args.threads,
+        s = LocationEventScraper(config, locations, events,
+                                 'last' if args.last_month else start_time,
+                                 'last' if args.last_month else end_time,
+                                 max_workers=args.threads,
                                  post_cb=False)
 
         for i, result in enumerate(s.get_events()):
@@ -195,7 +186,7 @@ def main(args):
             if time() - lt > 10:
                 lt = time()
                 delta_t = time() - st
-                print('Wrote {}, {}/sec; skipped {} '.format(count, round((count / delta_t)), skipped ))
+                print('\033[FWrote {}, {}/sec; skipped {} '.format(count, round((count / delta_t)), skipped )+" "*10)
 
             if result[0] is False:
                 skipped +=1

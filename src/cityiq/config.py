@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# Copyright (c) 2019 Civic Knowledge. This file is licensed under the terms of the
+# MIT License, included in this distribution as LICENSE
 """
 The CityIq module and programs require a configuration file that hold credentials and urls. You can generate a default
 configuration with ::
@@ -41,13 +44,17 @@ class Config(object):
     def __init__(self, path=None, **kwargs):
         """
 
-        :param path:
-        :param client_id:
-        :param secret:
-        :param uaa_url:
-        :param metadata_url:
-        :param bbox:
-        :param zone:
+        :param path: A path in which to look for config. Prepended to search paths
+
+        kwargs set top level value.
+
+        Special handling for cache keys; kwargs of the
+        form "cache_object" will set the 'object' key of the top level
+        'cache' dict. So to change the object cache: Config(cache_object="/tmp")
+
+        Equivalently, the values in the config file in the 'cache" dict are flattened,
+        so 'cache->meta' is translated to 'cache_meta'
+
 
         """
 
@@ -71,6 +78,14 @@ class Config(object):
         self._kwargs = kwargs
 
         self._config = self._load_config()
+
+        if 'cache' in self._config:
+            for k, v in self._config['cache'].items():
+                self._config['cache_'+k] = v
+
+            del self._config['cache']
+
+
 
     def _load_config(self):
         """
@@ -99,6 +114,8 @@ class Config(object):
 
         return d
 
+
+
     def __getattr__(self, item):
 
         try:
@@ -120,6 +137,9 @@ class Config(object):
             raise AttributeError(item)
 
         return None
+
+
+
 
     def __getitem__(self, item):
         try:

@@ -35,17 +35,49 @@ The code will look for this file in several places in this order:
 - ``city-iq.yaml`` in the current dir
 - ``.city-iq.yaml`` in the user's home dir
 
-Use
-===
+Command Line
+============
 
-After generating a config file you can run the ``ciq_`` programs to get events, assets and locations. The ``ciq_assets``
-will list all of the system assets as JSON lines::
+Getting assets and locations
+----------------------------
 
-    $ ciq_assets
+Run the ``ciq_assets`` program to get assets and locations. For instance, to print
+out walkways as JSON lines::
 
+    $ ciq_assets --walkways
+
+Or, to write all locations to a CSV file:
+
+    $ ciq_assets -L locations.csv
+
+Run ``ciq_assets -h`` to see all of the options
+
+Getting events
+--------------
+
+The ``ciq__events`` program will scrape and cache events. It requests events
+for a single or set of events at a time, and makes requests to the API
+for all of the locations in the system. The requests are for a time range that begins
+with the date specified either with the `--start-time` option, or the 'start_time:'
+configuration in the config file.
+
+For instance, to scrape pedestrian event::
+
+  $ ciq_events -s ped
+
+The program will report the number of events it has downloaded and written,
+as well as the number that have been skipped because they are cached. To list the
+files that have been cached with the ``-l`` option::
+
+  $ ciq_events -l ped
+
+You can iterate the records from the cached files with the ``-i`` option::
+
+  $ ciq_events -i ped
 
 
 The Documentation_ has more details, but not much more.
+
 
 
 Devlopment

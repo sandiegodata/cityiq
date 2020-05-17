@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2019 Civic Knowledge. This file is licensed under the terms of the
+# MIT License, included in this distribution as LICENSE
+
 from pkg_resources import get_distribution, DistributionNotFound
 
 try:
@@ -10,6 +13,8 @@ except DistributionNotFound:
 finally:
     del get_distribution, DistributionNotFound
 
-from .api import Config, CityIq, CityIqError   # noqa
+from .api import Config, CityIq   # noqa
+from cityiq.exceptions import CityIqError
 
-from .exceptions import  *
+from .exceptions import *
+from .iterate import EventIterator, ParkingIterator, PedestrianIterator

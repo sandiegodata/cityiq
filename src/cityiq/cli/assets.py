@@ -9,6 +9,8 @@ import logging
 import sys
 
 from cityiq import __version__
+import csv
+import tqdm
 
 __author__ = "Eric Busboom"
 __copyright__ = "Eric Busboom"
@@ -16,18 +18,17 @@ __license__ = "mit"
 
 _logger = logging.getLogger(__name__)
 
+acessors = 'assets', 'nodes', 'cameras', 'env_sensors', 'em_sensors ', 'mics', \
+           'locations', 'walkways', 'traffic_lanes', 'parking_zones'
 
 def parse_args(args):
-    """Parse command line parameters
+    """Fetch and cache assets
 
-    Args:
-      args ([str]): command line parameters as list of strings
+    Queries the CityIQ API and fetches all assets, returning them as JSON lines
 
-    Returns:
-      :obj:`argparse.Namespace`: command line parameters namespace
     """
     parser = argparse.ArgumentParser(
-        description="Fetch and dispay assets")
+        description=parse_args.__doc__)
     parser.add_argument('--version', action='version', version='cityiq {ver}'.format(ver=__version__))
 
     parser.add_argument('-v', '--verbose', dest="loglevel", help="set loglevel to INFO", action='store_const',
@@ -38,11 +39,21 @@ def parse_args(args):
 
     parser.add_argument('-C', '--config', help='Path to configuration file')
 
+    parser.add_argument('-F', '--no-cache', help="Don't use cached metadata; force a request to the API",
+                       action="store_true")
+
     group = parser.add_mutually_exclusive_group()
 
-    group.add_argument('-i', '--iterate', help='Iterate over stored events returning JSON lines', action='store_true')
+    group.add_argument('-M', '--asset-map-csv', help='Write a CSV file that maps assets to locations ')
 
-    group.add_argument('-c', '--csv', help='Write assets to a CSV file')
+    group.add_argument('-A', '--assets-csv', help='Write all assets assets to a CSV file. ')
+
+    group.add_argument('-L', '--locations-csv', help='Write all assets assets to a CSV file. ')
+
+
+    for a in acessors:
+        group.add_argument(f'--{a}', help=f'Print all {a} as JSON lines', action="store_true")
+
 
     return parser.parse_args(args)
 
@@ -68,7 +79,6 @@ def main(args):
 
     from cityiq import Config, CityIq, AuthenticationError
 
-
     args = parse_args(args)
     setup_logging(args.loglevel)
 
@@ -83,19 +93,36 @@ def main(args):
 
     print("Using config:", config._config_file)
 
-    c = CityIq(config, cache_metadata=args.force)
+    c = CityIq(config, cache_metadata= not args.no_cache)
 
     try:
-        if args.csv:
-            df = c.pair()
+        if args.asset_map_csv:
+            print("Building asset to locations map. This is really slow.")
+            with open(args.asset_map_csv, 'w') as f, tqdm.tqdm() as p:
+                w = csv.writer(f)
+                w.writerow('assetUid parentAssetUid assetType locationUid parentLocationUid locationType'.split())
 
-            df.to_csv(args.pair)
-
+                for a in c.assets:
+                    for l in a.locations:
+                        w.writerow([a.assetUid, a.parentAssetUid, a.assetType, l.locationUid, l.parentLocationUid, l.locationType])
+                        p.update(1)
+        elif args.assets_csv:
+            c.asset_dataframe.to_csv(args.assets_csv)
+        elif args.locations_csv:
+            c.locations_dataframe.to_csv(args.locations_csv)
         else:
-            for r in c.nodes:
-                print(r.data)
+            for a in acessors:
+                if getattr(args, a) == True:
+                    for l in getattr(c, a):
+                        print(l)
+
+
     except AuthenticationError:
         print("ERROR: Authentication failed. Check your username and password, or the authentication UAA url")
+        sys.exit(1)
+    except ModuleNotFoundError as e:
+        print(e)
+        print("ERROR: writing a CSV requires Pandas and Shapley: pip|conda install pandas shapley")
         sys.exit(1)
 
 

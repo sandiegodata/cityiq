@@ -11,92 +11,109 @@ from cityiq.scrape import logger as scrape_logger
 from cityiq.token import logger as token_logger
 
 from .support import CityIQTest
+import csv
+import pathlib
+from datetime import datetime
 
 # config_file = '/Users/eric/proj/virt-proj/data-project/sdrdl-data-projects/sandiego.gov/predix.io/prod-credentials
 # .yaml'
 
 
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
+config = Config(cache_objects='/tmp/object/', cache_error='/tmp/error', cache_meta='/tmp/meta')
+
 class TestBasic(CityIQTest):
 
     def test_get_token(self):
-        config = Config(cache_dir='/tmp')
-
         c = CityIq(config)
 
         self.assertTrue(len(c.token) > 100)
 
-    def test_get_assets(self):
+    def test_time(self):
 
-        c = CityIq(Config(cache_dir='/tmp'))
+        c = CityIq(config)
 
-        print("!!!!", c.config.metadata_url)
+        dt = c.tz.localize(datetime(2020, 1, 1, 0, 0, 0))
 
-        assets = list(c.get_assets())
+        for t in ('2020-01-01', 1577865600, datetime(2020, 1, 1, 0, 0, 0)):
+            self.assertEquals(dt, c.convert_time(t))
 
-        self.assertTrue(len(assets) > 4000)
+        now = c.tz.localize(datetime.now())
 
-        # return
+        for t in ('now', None):
+            self.assertEquals(int(now.timestamp()), int(c.convert_time(t).timestamp()))
 
-        for a in assets[:5]:
-            print(a.assetType, a.assetUid)
-            # print(a.data)
-            # print(l.detail)
-            for l in a.locations:
-                print('  ', l)
+    def test_cache_assets_locations(self):
+        from time import time
 
-            for c in a.children:
-                print('  ', c)
+        c = CityIq(config)
+
+        c.clear_meta_cache()
+
+        #
+        # These should take gonger because
+        # they are making the full request
+        t = time()
+        o = c.get_locations()
+        self.assertGreater(time() - t, 1)
+        self.assertGreater(len(o), 500)
+
+        t = time()
+        c.get_assets()
+        self.assertGreater(time() - t, 4)
+        o = self.assertGreater(len(o), 500)
+
+        # These should be fast, because they are cached.
+        t = time()
+        o=c.get_locations()
+        self.assertLess(time() - t, 1)
+        self.assertGreater(len(o), 500)
+
+        t = time()
+        o=c.get_assets()
+        self.assertLess(time() - t, 1)
+        self.assertGreater(len(o), 500)
+
 
     def test_total_bbox(self):
 
-        c = CityIq(Config(cache_dir='/tmp'))
+        c = CityIq(config)
 
         print(c.total_bounds)
 
-        print(len(list(c.get_assets())))
-
-    def test_dump_assets(self):
-        import csv
-
-        c = CityIq(Config(cache_dir='/tmp'))
-        with open('/tmp/assets.csv', 'w') as f:
-            w = csv.writer(f)
-            w.writerow('id type lat lon'.split())
-
-            for a in c.get_assets():
-                w.writerow([a.assetUid, a.assetType, a.lat, a.lon])
-
-    def test_get_locations(self):
-
-        c = CityIq(Config(cache_dir='/tmp'))
-
-        locations = list(c.get_locations())
-
-        self.assertTrue(len(locations) > 900)
-
-        for l in locations[:5]:
-            print('----')
-            print(l.locationType, l.locationUid)
-            # print(l.data)
-            # print(l.detail)
-            for a in l.assets:
-                print('   ', a)
 
     def test_location_events(self):
         from datetime import datetime
 
-        c = CityIq(Config(cache_dir='/tmp'))
+        c = CityIq(config)
 
         locations = list(c.locations)
 
-        start = c.tz.localize(datetime(2019, 2, 1, 11, 0, 0))
-        end = c.tz.localize(datetime(2019, 2, 1, 14, 0, 0))
+        start = c.tz.localize(datetime(2020, 1, 1, 0, 0, 0))
+        end = c.tz.localize(datetime(2020, 2, 1, 0, 0, 0))
 
-        print(locations[100].events('PKIN', start, end))
+        for l in locations:
+            print(l.uid, len(l.get_events('PKIN', start, end)))
+
+
+    def test_location_events_2(self):
+
+        from datetime import datetime
+
+        c = CityIq(config)
+
+        locations = list(c.locations)
+
+        start = c.tz.localize(datetime(2020, 1, 1, 0, 0, 0))
+        end = None # c.tz.localize(datetime(2019, 2, 1, 14, 0, 0))
+
+        print(locations[300].events('PKIN', start, end))
 
     def test_nodes(self):
 
-        c = CityIq(Config(cache_dir='/tmp'))
+        c = CityIq(config)
 
         for n in c.nodes:
             print(n)
@@ -158,7 +175,7 @@ class TestBasic(CityIQTest):
 
         print(min_ts, max_ts)
 
-        self.assertEquals(2061, len(events))
+        self.assertEquals(280, len(events))
         self.assertEquals(1549330201799, min_ts)
         self.assertEquals(1549331099575, max_ts)
 
@@ -178,25 +195,52 @@ class TestBasic(CityIQTest):
         token_logger.setLevel(logging.DEBUG)
         scrape_logger.setLevel(logging.DEBUG)
 
-        config = Config(cache_dir='/tmp')
+        config = Config()
 
         r = get_events(config, datetime(2019, 2, 5, 12, 0, 0), 1 * 60 * 60, ['PKIN', 'PKOUT'])
 
         with open('/tmp/results.json', 'w') as f:
             json.dump(r, f)
 
-    def test_scrape_events(self):
-        import pytz
-        from datetime import datetime
-        from cityiq.scrape import scrape_events
 
-        logging.basicConfig(level=logging.INFO)
-        token_logger.setLevel(logging.DEBUG)
-        scrape_logger.setLevel(logging.DEBUG)
-        api_logger.setLevel(logging.DEBUG)
 
-        start_time = pytz.timezone('US/Pacific').localize(datetime(2019, 1, 1, 0, 0))
+    def test_bicycle_events(self):
 
-        config = Config()
+        c = CityIq(config)
 
-        scrape_events(config, start_time, ['PKIN', 'PKOUT'])
+        for a in c.get_assets():
+            if a.eventTypes and 'BICYCLE' in a.eventTypes:
+                print(a.uid, len(a.get_events('BICYCLE', '2020-4-1', '2020-4-2')))
+
+
+    def test_bicycle_event(self):
+
+        c = CityIq(config)
+
+        start = c.tz.localize(datetime(2020, 4, 1, 0, 0, 0))
+        end = c.tz.localize(datetime(2020, 4, 3, 0, 0, 0))
+
+        a = c.get_asset('99b3cf15-cf73-459e-8811-904224c3dfd5')
+
+        print(a.uid, len(a.get_events('BICYCLE', '2020-4-1', '2020-4-2')))
+
+
+    def test_locations_at_asset(self):
+
+        import csv
+        import pathlib
+
+        c = CityIq(config)
+
+        for a in c.assets:
+            for l in a.locations:
+                print(a.assetUid, a.parentAssetUid, a.assetType,  l.locationUid, l.parentLocationUid, l.locationType)
+
+
+    def test_load_locations(self):
+
+        c = CityIq(config)
+
+        for l in c.load_locations('/tmp/locations.csv'):
+            print(l)
+
