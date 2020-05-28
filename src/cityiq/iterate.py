@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import pytz
-from cityiq.util import event_type_to_locations
+
 from dateutil.parser import parse as parse_dt
 from dateutil.relativedelta import relativedelta
 
@@ -104,33 +104,8 @@ class EventIterator(object):
         sub_dir = self._objects[0].object_sub_dir
         return Path(Path(self.config.cache_objects)).joinpath(sub_dir)
 
-    def request_months(self):
-        """Generate month ranges for the request"""
 
-        from dateutil.relativedelta import relativedelta
 
-        m1 = relativedelta(months=1)
-
-        st = self.start_time.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        et = self.end_time.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-
-        while st < et + m1:
-            yield st, st + m1
-            st += m1
-
-    def request_days(self):
-        """Generate day ranges for the request"""
-
-        from dateutil.relativedelta import relativedelta
-
-        m1 = relativedelta(days=1)
-
-        st = self.start_time.replace(hour=0, minute=0, second=0, microsecond=0)
-        et = self.end_time.replace(hour=0, minute=0, second=0, microsecond=0)
-
-        while st < et + m1:
-            yield st, st + m1
-            st += m1
 
     def generate_file_frames(self):
         """Yield location,time,event tuples for all of the files that would be scraped"""

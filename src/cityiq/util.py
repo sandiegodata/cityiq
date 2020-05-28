@@ -18,6 +18,24 @@ from dateutil.parser import parse
 local_tz = datetime.now(timezone.utc).astimezone().tzinfo
 
 
+def run_async(items,  workers=4):
+    """Run a function in multiple threads"""
+
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        futures = { executor.submit(item.run):item for item in items }
+
+        for future in as_completed(futures):
+            item = futures[future]
+
+            try:
+                result = future.result()
+            except Exception as e:
+                yield item, e
+            else:
+                yield item, result
+
 def timestamp_to_local(ts, tz):
     """Convert a UTC timestamp in milliseconds to a local time, in the timezone tz,  with no timezone"""
 
@@ -38,18 +56,21 @@ def make_csv_file_name(cache, locationUid, event_type):
     return Path(cache).joinpath('{}/{}.csv'.format(locationUid, event_type))
 
 
-def event_type_to_locations(c, events):
-    if set(events) & {'PKIN', 'PKOUT'}:
-        locations = list(c.parking_zones)  # Get all of the locations
-    elif set(events) & {'PEDEVT'}:
-        locations = list(c.walkways)  # Get all of the locations
-    elif set(events) & {'TFEVT'}:
-        locations = list(c.traffic_lanes)  # Get all of the locations
-    else:
-        locations = []
 
-    return locations
 
+
+def event_type_to_location_type(event_type):
+
+        if event_type in {'PKIN', 'PKOUT'}:
+            return "PARKING_ZONE"
+        elif event_type == 'PEDEVT':
+            return "WALKWAY"
+        elif  event_type == 'TFEVT':
+            return "TRAFFIC_LANE"
+        elif  event_type == 'BICYCLE':
+            return "TRAFFIC_LANE"
+        else:
+            raise CityIqError("Unknown Event type: "+event_type)
 
 def json_serial(obj):
     """JSON serializer for objects not serializable by default json code"""
@@ -108,4 +129,24 @@ def event_to_zone(config, event_type):
         'ENERGY_ALERT': config.environmental_zone
     }
 
-    return d.get(event_type)
+    return d[event_type]
+
+
+def log_message(r):
+    """Debugging log message for requests"""
+    from textwrap import dedent
+    headers = r.request.headers
+    url = r.request.url
+
+    headers['Authorization'] = headers['Authorization'][:5] + '...'  # Bearer token is really long
+
+    m = f"""
+
+    url             : {url}
+    request headers : {headers}
+    status code     : {r.status_code}
+    response headers: {headers}
+
+    """
+
+    return dedent(m)

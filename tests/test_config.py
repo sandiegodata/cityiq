@@ -12,8 +12,8 @@ from .support import CityIQTest
 class TestConfig(CityIQTest):
 
     def test_basic(self):
-        c1 = self.test_data('config1.yaml')
-        c2 = self.test_data('config2.yaml')
+        c1 = self.get_test_data('config1.yaml')
+        c2 = self.get_test_data('config2.yaml')
 
         c = Config(c1)
 
@@ -53,10 +53,3 @@ class TestConfig(CityIQTest):
         del environ['CITYIQ_CLIENT_ID']
         print(c.client_id)
 
-    def test_override_cache(self):
-
-        c1 = self.test_data('config3.yaml')
-        c = Config(c1)
-
-        print(c.cache_objects)
-        print(c['cache_objects'])

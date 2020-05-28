@@ -15,16 +15,15 @@ logger = logging.getLogger(__name__)
 
 class Location(CityIqObject):
     object_sub_dir = 'location'
+    uid_key = 'locationUid'
     detail_url_suffix = '/api/v2/metadata/locations/{}'
     assets_url_suffix = '/api/v2/metadata/locations/{}/assets'
-    events_url_suffix = '/api/v2/event/locations/{locationUid}/events'
+    events_url_suffix = '/api/v2/event/locations/{uid}/events'
 
     row_header = 'locationUid locationType parentLocationUid  geometry'.split()
 
     # observed values for the assetType field
     types = ['WALKWAY', 'TRAFFIC_LANE', 'PARKING_ZONE']
-
-
 
     @property
     def uid(self):
@@ -32,11 +31,18 @@ class Location(CityIqObject):
 
     @property
     def detail(self):
+        """Return a new Location after making a non-cached call to the API. The
+        response value is cached, so this will update the cache. """
         url = self.client.config.metadata_url + self.detail_url_suffix.format(self.locationUid)
 
         r = self.client.http_get(url)
 
-        return r.json()
+        l = Location(self.client, r.json())
+
+        l.write()
+
+        return l
+
 
     @property
     def assets(self):
@@ -48,13 +54,6 @@ class Location(CityIqObject):
         for e in r.json()['assets']:
             yield Asset(self.client, e)
 
-    def get_events(self, event_type, start_time, end_time=None, span=None, ago=None):
-        start_time = self.client.convert_time(start_time)
-        end_time = self.client.convert_time(end_time)
-
-        url = self.client.config.event_url + self.events_url_suffix.format(locationUid=self.locationUid)
-
-        return self.client._events(url, event_type, start_time, end_time, bbox=False)
 
     @property
     def row(self):

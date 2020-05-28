@@ -1,45 +1,89 @@
+
 import json
 import logging
 import threading
 from pathlib import Path
 from time import sleep
-
+from datetime import date
 from cityiq.api import CityIqObject
 from requests import HTTPError
+from typing import Dict, Tuple, Sequence
 
 from .util import json_serial
 
 
 logger = logging.getLogger(__name__)
 
-class FetchTask(object):
-    """A task for fetching from the CityIQ API, suitable for use with AsyncIO. It handles
-    mulltiple retries and caching"""
 
-    def __init__(self, access_object: CityIqObject, event_type, start_time, end_time, is_short = False, overwrite=False):
+def generate_days(start_time, end_time, include_end=False):
+    """ Generate day ranges for the request
+
+
+    :param start_time:
+    :param end_time:
+    :param include_end: If True, range will include end date, if False, it will stop one day before
+    :return:
+    """
+
+
+    from dateutil.relativedelta import relativedelta
+
+    d1 = relativedelta(days=1)
+
+    st = start_time.replace(hour=0, minute=0, second=0, microsecond=0)
+    et = end_time.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    if include_end is True:
+        et = et + d1
+
+    while st < et:
+        yield st
+        st += d1
+
+class EventTask(object):
+    """Base class for operations on a single object, event type and day. These tasks
+    can be run in parallel and be subclassed to provide specific operations. """
+
+    def __init__(self, access_object: CityIqObject, event_type, dt: date):
 
         self.access_object = access_object
-        self.overwrite = overwrite
-        self.is_short = False
-
         self.event_type = event_type
-        self.start_time = start_time
-        self.end_time = end_time
+        self.dt = dt
 
-        self.config = self.access_object.client.config
+        self.cache_file = self.access_object.cache_file(None, self.event_type, self.dt)
 
-        self.object_cache = Path(Path(self.config.cache_objects)).joinpath(self.access_object.object_sub_dir)
+        self.processed = False
+        self.downloaded = None # True or false depending on wether in cache.
 
-        self.processed = 0
-        self.wrote = 0
+        self.http_errors = 0
         self.errors = 0
-        self.existed = 0
 
-        self.cache_name = access_object.cache_path(self.start_time, self.event_type, is_short)
 
-        logger.debug(f"New fetch task {self.cache_name}")
+    def __str__(self):
+        return f"<{self.access_object} {self.event_type} {self.dt}>"
+
+    def exists(self):
+        return self.cache_file.exists()
+
+    @classmethod
+    def make_tasks(cls, objects: Sequence[CityIqObject], event_types: Sequence[str],
+                   start_date: date, end_date: date):
+
+        if isinstance(event_types, str):
+            event_types = [event_types]
+
+        for dt in generate_days(start_date, end_date):
+            for o in objects:
+                for et in event_types:
+                    yield cls(o, et, dt)
 
     def run(self):
+        raise NotImplementedError
+
+class DownloadTask(EventTask):
+    """An event task that downloads the events for a single location or asset, day and event type"""
+
+    def robust_download(self):
         """
         Get the events of one type
         :param start_time:
@@ -48,96 +92,98 @@ class FetchTask(object):
         :param tz_name:
         :return:
         """
-        logger.debug(f"Run fetch task {self.cache_name}")
-
-        if self.make_task_path(self.event_type, self.start_time, self.end_time) is False:
-            return False, self.cache_name
+        #logger.debug(f"Run fetch task {str(self)}")
 
         delay = 5
         last_exception = None
         for i in range(5):  # 5 retries on errors
             try:
-                r = self.access_object.get_events(self.event_type, self.start_time, self.end_time)
+
+                r = self.access_object.get_events_day(self.event_type, self.dt)
+
                 break
             except HTTPError as e:
-                logger.error('{} Failed. Retry in  {} seconpds: {}'.format(self.cache_name, delay, e))
+                logger.error('{} Failed. Retry in  {} seconds: {}'.format(str(self), delay, e))
                 err = {
                     'location': self.access_object.uid,
                     'event_type': self.event_type,
-                    'start_time': self.start_time,
-                    'end_time': self.end_time,
+                    'dt': self.dt,
                     'request_url': e.request.url,
                     'request_headers': dict(e.request.headers),
                     'response_headers': dict(e.response.headers),
                     'response_body': e.response.text
                 }
 
-                fn = 'loc-{}-{}-{}-{}'.format(self.access_object.uid, self.event_type, self.start_time.date(), self.end_time.date())
+                fn = '{}-{}-{}'.format(self.access_object.uid, self.event_type, self.dt.isoformat())
 
-                with Path(self.access_object.client.config.cache_errors).joinpath(fn).open('w') as f:
+                p = Path(self.access_object.client.config.cache_errors).joinpath(fn)
+
+                if not p.parent.exists():
+                    p.parent.mkdir(parents=True, exist_ok=True)
+
+                with p.open('w') as f:
                     json.dump(err, f, default=json_serial, indent=4)
 
                 delay *= 2 # Delay backoff
                 delay = delay if delay <= 60 else 60
                 sleep(delay)
-                self.errors += 1
+                self.http_errors += 1
+                last_exception = e
+            except Exception as e:
+                self.http_errors += 1
+                logger.error(f"Error '{type(e)}: {e}' for {self.access_object}")
                 last_exception = e
         else:
             if last_exception:
-                logger.error("{} Giving up.")
+                logger.error(f"{last_exception} Giving up.")
                 raise last_exception
 
-        d = {'start_time': self.start_time,
-             'end_time': self.end_time,
+        #logger.debug(f"Finished fetch task {str(self)}")
+
+        d = {'dt': self.dt,
              'obj_type': str(type(self.access_object)),
              'obj_uid': self.access_object.uid,
              'event_type': self.event_type,
-             'events': r}
+             'response': r}
 
-        self.write_results(d)
+        return d
 
-        return True, self.cache_name
 
-    def make_task_path(self, event_type, start_time, end_time):
-        """Create a task path for writing the results of the task, and return
-        it if it does not exist. If it does, return False"""
+class DataframeTask(EventTask):
 
-        self.processed += 1
+    def run(self):
 
-        if self.cache_name.exists() and not self.overwrite:
-            logger.info("{} exists".format(str(self.cache_name)))
-            self.existed += 1
-            return False
-        else:
-            return self.cache_name
-
-    def write_results(self, result):
+        import pandas as pd
+        try:
+            from pandas import json_normalize
+        except ImportError:
+            from pandas.io.json import json_normalize
 
         try:
-            self.cache_name.parent.mkdir(parents=True, exist_ok=True)
-        except FileExistsError:
-            # Another thread may have created the directory
-            pass
-        except AttributeError:
-            raise  # The token is not a Path
+            d = self.cache_file.read()
+            return json_normalize(d)
+        except Exception as e:
+            print(f"Error '{type(e)}: {e}' in {self.cache_file.path}")
+            return None
 
-        last_exc = None
-        for i in range(3):
-            try:
-                with self.cache_name.open('w') as f:
-                    json.dump(result, f, default=json_serial)
-                    break
-            except FileNotFoundError:
-                # Not sure what's going on with this error
 
-                logger.error(f"File Not Found Error for {str(self.cache_name)}")
-                sleep(5)
+class DownloadDataframeTask(DownloadTask):
 
-        else:
-            raise last_exc
+    def run(self):
 
-        self.wrote += 1
-        logger.info("{} wrote".format(str(self.cache_name)))
+        import pandas as pd
+        try:
+            from pandas import json_normalize
+        except ImportError:
+            from pandas.io.json import json_normalize
+
+        try:
+            self.robust_download()
+            d = self.cache_file.read()
+            return json_normalize(d)
+        except Exception as e:
+            print(f"Error '{type(e)}: {e}' in {self.cache_file.path}")
+            return None
 
 
 class EventWorker(threading.Thread):

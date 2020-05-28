@@ -22,9 +22,7 @@ acessors = 'assets', 'nodes', 'cameras', 'env_sensors', 'em_sensors ', 'mics', \
            'locations', 'walkways', 'traffic_lanes', 'parking_zones'
 
 def parse_args(args):
-    """Fetch and cache assets
-
-    Queries the CityIQ API and fetches all assets, returning them as JSON lines
+    """Get assets and locations for a CityIQ system
 
     """
     parser = argparse.ArgumentParser(

@@ -3,218 +3,84 @@
 """
 
 import logging
-import pytz
-from datetime import datetime
+from pathlib import Path
 
 from cityiq.api import CityIq
 from cityiq.api import logger as api_logger
 from cityiq.config import Config
-from cityiq.scrape import logger as scrape_logger
-from cityiq.token import logger as token_logger
-from cityiq.scrape import AsyncFetchRunner
 
 from .support import CityIQTest
 
 import logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig()
 
-config = Config(cache_objects='/tmp/object/')
+class TestEvents(CityIQTest):
 
-class TestBasic(CityIQTest):
+    def setUp(self):
+        self.config = Config(Path(__file__).parent.joinpath())
 
-    def test_location_events(self):
-        from datetime import datetime
+    def test_location_events_day(self):
+        # api_logger.setLevel(logging.DEBUG)
 
-        c = CityIq(Config(cache_dir='/tmp'))
+        location_uids = ['09a66ff9a2c0cb63106fe0054412c2af', '0d152fbd26c5baad229556c01d3eb43b',
+                         '0d1vvenvsrp7jgi27jvx']
 
-        locations = list(c.parking_zones)
+        c = CityIq(self.config)
 
-        start = c.tz.localize(datetime(2019, 1, 1, 0, 0, 0))
-        end = c.tz.localize(datetime(2019, 1, 31, 0, 0, 0))
+        locations = [c.get_location(uid) for uid in location_uids]
 
-        events = locations[100].events('PKIN', start, end)
+        # By individual days:
 
-        self.assertEqual(3537, len(events))
+        events = []
 
-    def test_walkway_events(self):
-        from datetime import datetime
+        for day in ['2019-01-01', '2019-01-02']:
+            for i, l in enumerate(locations):
+                events += l.get_events_day('PKIN', day)
 
-        c = CityIq(Config(cache_dir='/tmp'))
+        n_events_indv = len(events)
 
-        locations = list(c.walkways)
+        self.assertGreater(n_events_indv, 600)
 
-        start = c.tz.localize(datetime(2019, 1, 1, 0, 0, 0))
-        end = c.tz.localize(datetime(2019, 1, 31, 0, 0, 0))
+        # By individual days, no cache:
 
-        events = locations[100].events('PEDEVT', start, end)
+        events = []
 
-        self.assertEqual(15581, len(events))
+        for day in ['2019-01-01', '2019-01-02']:
+            for i, l in enumerate(locations):
+                events += l.get_events_day('PKIN', day, use_cache=False)
 
-        # Longer
+        self.assertEqual(n_events_indv, len(events))
 
-        start = c.tz.localize(datetime(2018, 8, 1, 0, 0, 0))
-        end = c.tz.localize(datetime(2019, 1, 31, 0, 0, 0))
+        # One multi-day request
+        events = []
+        for i, l in enumerate(locations):
+            events += l.get_events('PKIN', '2019-01-01', '2019-01-03')
 
-        events = locations[50].events('PEDEVT', start, end)
+        n_events_mult = len(events)
+        self.assertGreater(n_events_mult, 600)
 
-        self.assertEqual(53676, len(events))
+        self.assertEqual(n_events_indv, n_events_mult)
 
-    def test_pkin_events(self):
+    def test_cached_events_day(self):
+        # This should run fast after the first time.
 
-        c = CityIq(Config(cache_dir='/tmp'))
-
-        from datetime import datetime
-        import pytz
-
-        pacific = pytz.timezone('US/Pacific')
-
-        ts = pacific.localize(datetime(2019, 2, 4, 17, 30, 0)).timestamp()
-
-        events = c.events(start_time=ts, span=15 * 60, event_type='PKIN')
-
-        min_ts = 2 ** 64
-        max_ts = 0
-
-        for i, e in enumerate(events):
-            min_ts = min(min_ts, int(e['timestamp']))
-            max_ts = max(max_ts, int(e['timestamp']))
-
-        self.assertEquals(388, len(events))
-        self.assertEquals(1549330381284, min_ts)
-        self.assertEquals(1549331098206, max_ts)
-
-    def test_pdevt_events(self):
-
-        c = CityIq(Config(cache_dir='/tmp'))
-
-        from datetime import datetime
-        import pytz
-
-        pacific = pytz.timezone('US/Pacific')
-
-        ts = pacific.localize(datetime(2019, 2, 4, 17, 30, 0)).timestamp()
-
-        events = list(c.events(start_time=ts, span=15 * 60, event_type='PEDEVT'))
-
-        min_ts = 2 ** 64
-        max_ts = 0
-
-        for i, e in enumerate(events):
-            min_ts = min(min_ts, int(e['timestamp']))
-            max_ts = max(max_ts, int(e['timestamp']))
-
-        print(min_ts, max_ts)
-
-        self.assertEquals(2061, len(events))
-        self.assertEquals(1549330201799, min_ts)
-        self.assertEquals(1549331099575, max_ts)
-
-    def test_async_events(self):
-
-        c = CityIq(Config(cache_dir='/tmp'))
-
-        for e in c.events_async():
-            print(e)
-
-    def test_scrape_events_1(self):
-        from datetime import datetime
-        from cityiq.scrape import get_events
-        import json
-
-        logging.basicConfig(level=logging.INFO)
-        token_logger.setLevel(logging.DEBUG)
-        scrape_logger.setLevel(logging.DEBUG)
-
-        config = Config(cache_dir='/tmp')
-
-        r = get_events(config, datetime(2019, 2, 5, 12, 0, 0), 1 * 60 * 60, ['PKIN', 'PKOUT'])
-
-        with open('/tmp/results.json', 'w') as f:
-            json.dump(r, f)
-
-    def test_scrape_events(self):
-        import pytz
-        from datetime import datetime
-        from cityiq.scrape import scrape_events
-
-        logging.basicConfig(level=logging.INFO)
-        token_logger.setLevel(logging.DEBUG)
-        scrape_logger.setLevel(logging.DEBUG)
         api_logger.setLevel(logging.DEBUG)
 
-        start_time = pytz.timezone('US/Pacific').localize(datetime(2019, 1, 1, 0, 0))
+        location_uids = ['09a66ff9a2c0cb63106fe0054412c2af', '0d152fbd26c5baad229556c01d3eb43b',
+                         '0d1vvenvsrp7jgi27jvx']
 
-        config = Config()
+        c = CityIq(self.config)
 
-        scrape_events(config, start_time, ['PKIN', 'PKOUT'])
+        locations = [c.get_location(uid) for uid in location_uids]
 
-    def test_location_scrape(self):
-        import pytz
-        from cityiq.scrape import LocationEventScraper
-        from datetime import datetime
-        from cityiq import CityIq, Config
+        # By individual days:
 
-        config = Config(cache_dir='/tmp')
+        events = []
 
-        c = CityIq(config)
+        for day in ['2019-01-01', '2019-01-02']:
+            for i, l in enumerate(locations):
+                events += l.get_events_day('PKIN', day, use_cache=True)
 
-        locations = list(c.parking_zones)  # [100:105]
+        n_events_indv = len(events)
 
-        start_time = pytz.timezone('US/Pacific').localize(datetime(2018, 8, 1, 0, 0))
-        end_time = pytz.timezone('US/Pacific').localize(datetime.now())
-
-        print(len(locations))
-
-        s = LocationEventScraper(config, locations, 'PKIN', start_time, end_time, max_workers=4)
-        for r in s.get_events():
-            print(len(r))
-
-
-    def test_get_asset(self):
-
-        c = CityIq(config)
-
-        l = c.get_asset('99b3cf15-cf73-459e-8811-904224c3dfd5')
-
-        print(l)
-
-
-    def test_bicycle_events(self):
-
-        c = CityIq(config)
-
-        l = c.get_asset('99b3cf15-cf73-459e-8811-904224c3dfd5')
-
-        print(l)
-
-        start = c.tz.localize(datetime(2019, 1, 1, 0, 0, 0))
-        end = c.tz.localize(datetime(2019, 1, 31, 0, 0, 0))
-
-        print(l.get_events( 'BICYCLE', '2020-04-01', '2020-04-02'))
-
-
-    def test_bicycle_events_ft(self):
-
-        c = CityIq(config)
-
-        l = c.get_asset('99b3cf15-cf73-459e-8811-904224c3dfd5')
-
-        print(l)
-
-        start = c.tz.localize(datetime(2020, 4, 1, 0, 0, 0))
-        end = c.tz.localize(datetime(2020, 4, 2, 0, 0, 0))
-
-        ft = l.get_fetch_task('BICYCLE', start, end)
-
-        ft.run()
-        
-    def test_bicycle_events_async(self):
-
-        c = CityIq(config)
-
-        l = [ e for e in c.get_assets() if 'BICYCLE' in e.eventTypes ]
-
-        start = c.tz.localize(datetime(2020, 4, 1, 0, 0, 0))
-        end = c.tz.localize(datetime(2020, 4, 6, 0, 0, 0))
-
-
+        self.assertGreater(n_events_indv, 600)

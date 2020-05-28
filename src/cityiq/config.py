@@ -35,7 +35,7 @@ can be accessed as an attribute or an index:
 
 from os import environ
 from pathlib import Path
-
+from .exceptions import ConfigurationError
 import yaml
 
 
@@ -63,17 +63,21 @@ class Config(object):
 
         self.env_vars = {e: f"CITYIQ_{e.upper()}" for e in self.parameters}
 
-        self._paths = [
-            Path.cwd().joinpath('.city-iq.yaml'),
-            Path.cwd().joinpath('city-iq.yaml'),
-            Path.home().joinpath('.city-iq.yaml'),
-        ]
+        if not path:
+            self._paths = [
+                Path.cwd().joinpath('.city-iq.yaml'),
+                Path.cwd().joinpath('city-iq.yaml'),
+                Path.home().joinpath('.city-iq.yaml'),
+            ]
+        else:
+            if Path(path).is_dir():
+                self._paths = [ Path(path).joinpath(e) for e in ['.city-iq.yaml', 'city-iq.yaml']]
+            else:
+                self._paths = [Path(path)]
 
         if environ.get('CITYIQ_CONFIG'):
             self._paths = [Path(environ.get('CITYIQ_CONFIG'))] + self._paths
 
-        if path:
-            self._paths = [Path(path)] + self._paths
 
         self._kwargs = kwargs
 
@@ -100,8 +104,14 @@ class Config(object):
                     if c:
                         c['_config_file'] = str(p)
                     return c
+        else:
+            raise ConfigurationError(f"Didn't find a config file in paths: {self._paths}")
 
         return {}
+
+    @property
+    def which(self):
+        return self._config_file
 
     @property
     def dict(self):

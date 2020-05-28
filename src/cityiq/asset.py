@@ -3,6 +3,7 @@ from cityiq.api import CityIqObject
 
 class Asset(CityIqObject):
     object_sub_dir = 'asset'
+    uid_key = 'assetUid'
     detail_url_suffix = '/api/v2/metadata/assets/{}'
     locations_url_suffix = '/api/v2/metadata/assets/{}/locations'
     children_url_suffix = '/api/v2/metadata/assets/{}/subAssets'
@@ -14,8 +15,6 @@ class Asset(CityIqObject):
     types = ['NODE', 'EM_SENSOR', 'MIC', 'ENV_SENSOR', 'CAMERA']
 
     # Map asset types to subclasses
-
-
 
     @property
     def uid(self):
@@ -31,12 +30,21 @@ class Asset(CityIqObject):
 
     @property
     def detail(self):
-        """Asset details"""
+        """Asset details, which appears to be just re-fetching the object data.
+        On some systems it may return additional data.
+
+        Most importantly, the read is not cached, so it can be used to return the
+        online/offline state of an asset without a time delay. """
         url = self.client.config.metadata_url + self.detail_url_suffix.format(self.assetUid)
 
         r = self.client.http_get(url)
 
-        return Asset(self.client, r.json())
+        a = Asset(self.client,r.json())
+
+        a.write()
+
+        return a
+
 
     @property
     def parent(self):
@@ -51,21 +59,28 @@ class Asset(CityIqObject):
         """Locations at this asset"""
         from cityiq.location import Location
 
-        url = self.client.config.metadata_url + self.locations_url_suffix.format(self.assetUid)
+        def ff():
+            url = self.client.config.metadata_url + self.locations_url_suffix.format(self.assetUid)
+            r = self.client.http_get(url)
+            return r.json()
 
-        r = self.client.http_get(url)
+        r = self.cache_file(ff, group='locations').run()
 
-        for e in r.json()['locations']:
+        for e in r['locations']:
             yield Location(self.client, e)
 
     @property
     def children(self):
         """Sub assets of this asset"""
-        url = self.client.config.metadata_url + self.children_url_suffix.format(self.assetUid)
 
-        r = self.client.http_get(url)
+        def ff():
+            url = self.client.config.metadata_url + self.children_url_suffix.format(self.assetUid)
+            r = self.client.http_get(url)
+            return r.json()
 
-        for e in r.json()['assets']:
+        r = self.cache_file(ff, group='children').run()
+
+        for e in r['assets']:
             yield Asset(self.client, e)
 
     @property
@@ -77,28 +92,25 @@ class Asset(CityIqObject):
         """Return a specific event type record"""
         pass
 
+    def has_events(self,events):
+        if isinstance(events, str):
+            events = [events]
+
+        return set(self.event_types) & set(events)
 
     def get_events(self, event_type, start_time, end_time=None):
+        from cityiq.task import DownloadTask
 
         start_time = self.client.convert_time(start_time)
         end_time = self.client.convert_time(end_time)
 
+        tasks = DownloadTask.make_tasks([self], event_type, start_time, end_time)
 
-        url = self.client.config.event_url + self.events_url_suffix.format(uid=self.uid)
+        results = list(r[1] for r in self.client.run_sync(tasks))
 
-        return self.client._events(url, event_type, start_time, end_time, bbox=False)
+        return results
 
-    @property
-    def row(self):
-        """Return most important fields in a row format"""
-        from operator import attrgetter
 
-        def evt_list(events):
-            return ','.join(sorted(set(events or [])))
-
-        ag = attrgetter(*Asset.row_header[:-2])
-
-        return ag(self) + (evt_list(self.eventTypes), self.geometry)
 
     def __getstate__(self):
         odict = self.__dict__.copy()
@@ -132,8 +144,8 @@ class MicSensorAsset(Asset):
 
 
 Asset.dclass_map = {'NODE': NodeAsset,
-                  'CAMERA': CameraAsset,
-                  'EM_SENSOR': EmSensorAsset,
-                  'ENV_SENSOR': EnvSensorAsset,
-                  'MIC': MicSensorAsset
-                  }
+                    'CAMERA': CameraAsset,
+                    'EM_SENSOR': EmSensorAsset,
+                    'ENV_SENSOR': EnvSensorAsset,
+                    'MIC': MicSensorAsset
+                    }

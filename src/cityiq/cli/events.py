@@ -92,7 +92,6 @@ def _main(args):
     from datetime import datetime, timezone
 
     from cityiq import Config, CityIq
-    from cityiq.scrape import LocationEventScraper
     from cityiq.iterate import EventIterator, ParkingIterator, PedestrianIterator
     from dateutil.parser import parse as parse_dt
 

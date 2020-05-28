@@ -1,30 +1,55 @@
 """
 
 """
-import logging
 
-from cityiq.api import CityIq
-from cityiq.api import logger as api_logger
+import logging
+from pathlib import Path
+
+from cityiq.api import CityIq, logger as api_logger
 from cityiq.config import Config
-from cityiq.scrape import logger as scrape_logger
-from cityiq.token import logger as token_logger
-from datetime import datetime
+from cityiq.task import FetchTask, logger as task_logger
+
 from .support import CityIQTest
-from  cityiq.task import FetchTask
-from cityiq.scrape import AsyncFetchRunner
-import logging
 
+logging.basicConfig()
 
-logging.basicConfig(level=logging.DEBUG)
-from cityiq.scrape import AsyncFetchRunner
 
 class TestScraper(CityIQTest):
 
-    def test_basic(self):
-        from datetime import datetime
-        from cityiq.iterate import EventIterator
+    def setUp(self):
+        #api_logger.setLevel(logging.DEBUG)
+        task_logger.setLevel(logging.DEBUG)
+        self.config = Config(Path(__file__).parent.joinpath())
 
-        c = CityIq(Config())
+    def test_generate_tasks(self):
+        c = CityIq(self.config)
 
-        l = c.get_locations()
+        locations = c.locations
 
+        tasks = list(FetchTask.make_tasks(locations[:10], ['PKIN', 'PKOUT'],
+                                     c.convert_time('2019-01-01'), c.convert_time('2019-04-11')))
+
+        #for t in tasks:
+        #    t.run()
+
+        print(sum(t.exists() for t in tasks))
+
+        self.assertEqual(2000,len(tasks))
+
+
+    def test_async_scrape(self):
+        from tqdm import tqdm
+        c = CityIq(self.config)
+
+        #task_logger.setLevel(logging.DEBUG)
+
+        events = ['BICYCLE'] # '['PKIN', 'PKOUT']
+
+        assets = list(c.assets_by_event(events))[:4]
+
+        tasks = c.make_tasks(assets, events, '2020-01-01', '2020-01-10')
+
+        df = c.events_dataframe(tasks)
+
+        print(len(df))
+        print(df.head().T)
