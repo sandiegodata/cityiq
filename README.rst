@@ -26,7 +26,7 @@ Or, to write the config to ``~/.city-iq.yaml`` ::
 
     $ ciq_config -wu
 
-The generated file is configured for the San Diego system. To you this system , you will just need to add your client id and secret.
+The generated file is configured for the San Diego system. To use this system , you will just need to add your client id and secret.
 
 The code will look for this file in several places in this order:
 
