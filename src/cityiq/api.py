@@ -207,7 +207,7 @@ class CacheFile(object):
 
         self.today = self._access_object.client.convert_time('now').replace(hour=0, minute=0, second=0, microsecond=0)
 
-        self._write = self._dt < self.today  # Don't write cache for today.
+        self._write = self._dt is None or self._dt < self.today  # Don't write cache for today.
 
     def run(self):
 

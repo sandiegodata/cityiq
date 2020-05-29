@@ -19,24 +19,24 @@ _logger = logging.getLogger(__name__)
 
 
 def make_parser():
-    """Parse command line parameters
+    """Create or print the ``cityiq`` module configuration.
 
-    Args:
-      args ([str]): command line parameters as list of strings
+    You can create a new configuration file with the ``-w`` option or
+    print the configuration with ``-p``
 
-    Returns:
-      :obj:`argparse.Namespace`: command line parameters namespace
+
     """
 
-    parser = argparse.ArgumentParser(description=make_parser().__doc__)
+    parser = argparse.ArgumentParser(description=make_parser.__doc__)
 
     parser.add_argument('--version', action='version', version='cityiq {ver}'.format(ver=__version__))
 
     group = parser.add_mutually_exclusive_group()
 
-    group.add_argument('-w', '--write', help='Write a new default config file to the current directory ', action='store_true')
+    group.add_argument('-w', '--write', help="Write a new default config file to the current directory, "
+                                             "or with -u to the user's directory ", action='store_true')
 
-    parser.add_argument('-u', '--user', help="With --write, write to the user's home directory",
+    parser.add_argument('-u', '--user', help="With --write, write to the user's home directory, ~/.cityiq.yaml",
                        action='store_true')
 
     parser.add_argument('-F', '--force', help="With --write, force overwritting",

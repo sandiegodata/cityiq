@@ -9,39 +9,20 @@ services:
       - X_CITYIQ_EVENTS_CACHE=/data/cache/cityiq/events
       - X_CITYIQ_CACHE_DIR=/data/cache/cityiq
     volumes:
-      - nas2-cache:/data/
+      - cache:/data/
   shell:
     entrypoint: sh
     image: cityiq
     tty: true
     stdin_open: true
     volumes:
-      - nas2-cache:/data/
-  config:
-    entrypoint: ciq_config
-    command: -p
-    image: cityiq
-    tty: true
-    volumes:
-      - nas2-cache:/data/
-  locations:
-    command: ciq_locations
-    image: cityiq
-    tty: true
-    volumes:
-      - nas2-cache:/data/
-  assets:
-    command: ciq_assets
-    image: cityiq
-    tty: true
-    volumes:
-      - nas2-cache:/data/
+      - cache:/data/
   events:
     entrypoint: ciq_events
     image: cityiq
     tty: true
     volumes:
-      - nas2-cache:/data/
+      - cache:/data/
 volumes:
-  nas2-cache:
+  cache:
     external: true

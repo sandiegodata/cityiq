@@ -33,6 +33,19 @@ with `cache_`.
     print(c.default_zone)
     print(c['cache_objects'])
 
+You can also set configuration values with environmental variables, by
+uppercasing the variable name and prefixing it with ``CITYIQ_``::
+
+.. code-block:: python
+
+    $ CITYIQ_CACHE_OBJECTS=/tmp/foo/bar ciq_config -p
+
+    ...
+    cache_errors: /Volumes/SSD_Extern/cityiq2/errors
+    cache_meta: /Volumes/SSD_Extern/cityiq2/meta
+    cache_objects: /tmp/foo/bar
+    ...
+
 
 """
 
@@ -62,7 +75,7 @@ class Config(object):
         """
 
         self.parameters = 'client_id secret bbox zone  uaa_url metadata_url event_url _config_file ' \
-                          'start_time cache_dir events_cache timezone'.split()
+                          'start_time timezone cache_meta cache_objects cache_errors'.split()
 
         self.env_vars = {e: f"CITYIQ_{e.upper()}" for e in self.parameters}
 
