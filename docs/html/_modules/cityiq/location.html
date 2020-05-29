@@ -1,0 +1,197 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>cityiq.location &#8212; cityiq 0.0.13.post0.dev2+gd82a06d.dirty documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for cityiq.location</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="c1"># Copyright (c) 2019 Civic Knowledge. This file is licensed under the terms of the</span>
+<span class="c1"># MIT License, included in this distribution as LICENSE</span>
+
+<span class="kn">from</span> <span class="nn">cityiq.api</span> <span class="k">import</span> <span class="n">CityIqObject</span>
+
+<span class="kn">from</span> <span class="nn">cityiq.asset</span> <span class="k">import</span> <span class="n">Asset</span>
+<span class="kn">from</span> <span class="nn">requests</span> <span class="k">import</span> <span class="n">HTTPError</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">.util</span> <span class="k">import</span> <span class="n">json_serial</span><span class="p">,</span> <span class="n">grouper</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Location"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.location.Location">[docs]</a><span class="k">class</span> <span class="nc">Location</span><span class="p">(</span><span class="n">CityIqObject</span><span class="p">):</span>
+    <span class="n">object_sub_dir</span> <span class="o">=</span> <span class="s1">&#39;location&#39;</span>
+    <span class="n">uid_key</span> <span class="o">=</span> <span class="s1">&#39;locationUid&#39;</span>
+    <span class="n">detail_url_suffix</span> <span class="o">=</span> <span class="s1">&#39;/api/v2/metadata/locations/</span><span class="si">{}</span><span class="s1">&#39;</span>
+    <span class="n">assets_url_suffix</span> <span class="o">=</span> <span class="s1">&#39;/api/v2/metadata/locations/</span><span class="si">{}</span><span class="s1">/assets&#39;</span>
+    <span class="n">events_url_suffix</span> <span class="o">=</span> <span class="s1">&#39;/api/v2/event/locations/</span><span class="si">{uid}</span><span class="s1">/events&#39;</span>
+
+    <span class="n">row_header</span> <span class="o">=</span> <span class="s1">&#39;locationUid locationType parentLocationUid  geometry&#39;</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+
+    <span class="c1"># observed values for the assetType field</span>
+    <span class="n">types</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;WALKWAY&#39;</span><span class="p">,</span> <span class="s1">&#39;TRAFFIC_LANE&#39;</span><span class="p">,</span> <span class="s1">&#39;PARKING_ZONE&#39;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">uid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">locationUid</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">detail</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a new Location after making a non-cached call to the API. The</span>
+<span class="sd">        response value is cached, so this will update the cache. &quot;&quot;&quot;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">metadata_url</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">detail_url_suffix</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">locationUid</span><span class="p">)</span>
+
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">http_get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+
+        <span class="n">l</span> <span class="o">=</span> <span class="n">Location</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">())</span>
+
+        <span class="n">l</span><span class="o">.</span><span class="n">write</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">l</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">assets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Assets at this location&quot;&quot;&quot;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">metadata_url</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">assets_url_suffix</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">locationUid</span><span class="p">)</span>
+
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">http_get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;assets&#39;</span><span class="p">]:</span>
+            <span class="k">yield</span> <span class="n">Asset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">row</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return most important fields in a row format&quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">operator</span> <span class="k">import</span> <span class="n">attrgetter</span>
+
+        <span class="n">ag</span> <span class="o">=</span> <span class="n">attrgetter</span><span class="p">(</span><span class="o">*</span><span class="n">Location</span><span class="o">.</span><span class="n">row_header</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">ag</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">geometry</span><span class="p">,)</span>
+
+
+    <span class="k">def</span> <span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">odict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="k">del</span> <span class="n">odict</span><span class="p">[</span><span class="s1">&#39;client&#39;</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">odict</span>
+
+    <span class="k">def</span> <span class="nf">__setstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">state</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="WalkwayLocation"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.location.WalkwayLocation">[docs]</a><span class="k">class</span> <span class="nc">WalkwayLocation</span><span class="p">(</span><span class="n">Location</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="TrafficLaneLocation"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.location.TrafficLaneLocation">[docs]</a><span class="k">class</span> <span class="nc">TrafficLaneLocation</span><span class="p">(</span><span class="n">Location</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="ParkingZoneLocation"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.location.ParkingZoneLocation">[docs]</a><span class="k">class</span> <span class="nc">ParkingZoneLocation</span><span class="p">(</span><span class="n">Location</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+<span class="c1"># Map asset types to subclasses</span>
+<span class="n">Location</span><span class="o">.</span><span class="n">dclass_map</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;WALKWAY&#39;</span><span class="p">:</span> <span class="n">WalkwayLocation</span><span class="p">,</span>
+        <span class="s1">&#39;TRAFFIC_LANE&#39;</span><span class="p">:</span> <span class="n">TrafficLaneLocation</span><span class="p">,</span>
+        <span class="s1">&#39;PARKING_ZONE&#39;</span><span class="p">:</span> <span class="n">ParkingZoneLocation</span>
+<span class="p">}</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">cityiq</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../authors.html">Authors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/modules.html">Module Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Eric Busboom.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.0.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
