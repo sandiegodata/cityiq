@@ -109,7 +109,6 @@ def event_to_location_type(event_type):
     else:
         return None
 
-
 def event_to_zone(config, event_type):
 
     d = {

@@ -150,9 +150,7 @@ class CityIqObject(object):
 
         return self.client._events(self.events_url, event_type, start_time, end_time, bbox=False)
 
-    def get_events_day(self, event_type, dt, use_cache=True):
-        """Get events for a single day, from the start of the day of the given date to the next day, exclusive"""
-
+    def get_day_cache_file(self, event_type, dt):
         from dateutil.relativedelta import relativedelta
 
         dt = self.client.convert_time(dt)
@@ -166,7 +164,12 @@ class CityIqObject(object):
             r = self.client._events(self.events_url, event_type, start_time, end_time, bbox=False)
             return r
 
-        return self.cache_file(ff, event_type, dt).run()
+        return self.cache_file(ff, event_type, dt)
+
+    def get_events_day(self, event_type, dt):
+        """Get events for a single day, from the start of the day of the given date to the next day, exclusive"""
+
+        return self.get_day_cache_file(event_type, dt).run()
 
     def __str__(self):
         return "<{}: {}>".format(type(self).__name__, self.data)
@@ -740,41 +743,17 @@ class CityIq(object):
 
         return list(fetch_tasks_class.make_tasks(objects, events, start_time, end_time))
 
-    def run_async(self, tasks, workers=4, pbar=True, pbar_desc=None):
+    def run_async(self, tasks, workers=4):
         """Run a set of tasks, created with make_tasks, with multiple workers """
 
+        for task, result in run_async(tasks, workers=workers):
+            yield task, result
 
-        if pbar:
-            with tqdm(total=len(tasks), desc=pbar_desc) as pbar:
-                for task, result in run_async(tasks, workers=workers):
-                    pbar.update()
-                    yield task, result
-        else:
-            for task, result in run_async(tasks, workers=workers):
-                yield task, result
-
-    def run_sync(self, tasks, pbar=True, pbar_desc=None):
+    def run_sync(self, tasks):
         """Run all of the tasks, one at a time, and return the combined results"""
 
-        if pbar:
-            with tqdm(total=len(tasks), desc=pbar_desc) as pbar:
-                for t in tasks:
-                    pbar.update()
-                    yield t, t.run()
-        else:
-            for t in tasks:
-                yield t, t.run()
-
-
-    def events_dataframe(self, tasks, workers=4, pbar=True):
-        """
-        :param tasks: Sequence of tasks, from make_tasks
-        :param tqdm: If true, use TQDM as a progress bar
-        :return:
-        """
-
-
-
+        for t in tasks:
+            yield t, t.run()
 
 
     @property

@@ -5,8 +5,9 @@ Subpackages
 -----------
 
 .. toctree::
+   :maxdepth: 4
 
-    cityiq.cli
+   cityiq.cli
 
 Submodules
 ----------
@@ -15,55 +16,79 @@ cityiq.api module
 -----------------
 
 .. automodule:: cityiq.api
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+cityiq.asset module
+-------------------
+
+.. automodule:: cityiq.asset
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 cityiq.clean\_events module
 ---------------------------
 
 .. automodule:: cityiq.clean_events
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 cityiq.config module
 --------------------
 
 .. automodule:: cityiq.config
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 cityiq.exceptions module
 ------------------------
 
 .. automodule:: cityiq.exceptions
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
-cityiq.scrape module
---------------------
+cityiq.location module
+----------------------
 
-.. automodule:: cityiq.scrape
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. automodule:: cityiq.location
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+cityiq.task module
+------------------
+
+.. automodule:: cityiq.task
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 cityiq.token module
 -------------------
 
 .. automodule:: cityiq.token
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+cityiq.util module
+------------------
+
+.. automodule:: cityiq.util
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 
 Module contents
 ---------------
 
 .. automodule:: cityiq
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -14,7 +14,6 @@ finally:
     del get_distribution, DistributionNotFound
 
 from .api import Config, CityIq   # noqa
-from cityiq.exceptions import CityIqError
 
 from .exceptions import *
-from .iterate import EventIterator, ParkingIterator, PedestrianIterator
+from cityiq.task import *

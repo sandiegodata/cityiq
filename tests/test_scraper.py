@@ -7,7 +7,7 @@ from pathlib import Path
 
 from cityiq.api import CityIq, logger as api_logger
 from cityiq.config import Config
-from cityiq.task import FetchTask, logger as task_logger
+from cityiq.task import logger as task_logger, generate_months, generate_days
 
 from .support import CityIQTest
 
@@ -53,3 +53,15 @@ class TestScraper(CityIQTest):
 
         print(len(df))
         print(df.head().T)
+
+    def test_generate_time(self):
+        c = CityIq(self.config)
+        st = c.convert_time('2019-01-01')
+        et = c.convert_time('2020-01-01')
+
+        for sm, em in generate_months(st, et):
+            print(sm, em)
+            for sd, ed in generate_days(sm, em):
+                print ('    ', sd.date(), ed.date())
+
+

@@ -21,12 +21,11 @@ _logger = logging.getLogger(__name__)
 acessors = 'assets', 'nodes', 'cameras', 'env_sensors', 'em_sensors ', 'mics', \
            'locations', 'walkways', 'traffic_lanes', 'parking_zones'
 
-def parse_args(args):
+def make_parser():
     """Get assets and locations for a CityIQ system
 
     """
-    parser = argparse.ArgumentParser(
-        description=parse_args.__doc__)
+    parser = argparse.ArgumentParser(description=make_parser.__doc__)
     parser.add_argument('--version', action='version', version='cityiq {ver}'.format(ver=__version__))
 
     parser.add_argument('-v', '--verbose', dest="loglevel", help="set loglevel to INFO", action='store_const',
@@ -53,7 +52,9 @@ def parse_args(args):
         group.add_argument(f'--{a}', help=f'Print all {a} as JSON lines', action="store_true")
 
 
-    return parser.parse_args(args)
+    return parser
+
+parser=make_parser()
 
 
 def setup_logging(loglevel):
@@ -77,7 +78,7 @@ def main(args):
 
     from cityiq import Config, CityIq, AuthenticationError
 
-    args = parse_args(args)
+    args = parser.parse_args(args)
     setup_logging(args.loglevel)
 
     if args.config:

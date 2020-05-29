@@ -37,8 +37,33 @@ def generate_days(start_time, end_time, include_end=False):
         et = et + d1
 
     while st < et:
-        yield st
+        yield st, st+d1
         st += d1
+
+def generate_months(start_time, end_time, include_end=False):
+    """ Generate month ranges from the start time to the end time
+
+    :param start_time:
+    :param end_time:
+    :param include_end: If True, range will include end date, if False, it will stop one day before
+    :return:
+    """
+
+
+    from dateutil.relativedelta import relativedelta
+
+    m1 = relativedelta(months=1)
+
+    st = start_time.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    et = end_time.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    if include_end is True:
+        et = et + m1
+
+    while st < et:
+        yield st, st+m1
+        st += m1
+
 
 class EventTask(object):
     """Base class for operations on a single object, event type and day. These tasks
@@ -50,20 +75,17 @@ class EventTask(object):
         self.event_type = event_type
         self.dt = dt
 
-        self.cache_file = self.access_object.cache_file(None, self.event_type, self.dt)
-
         self.processed = False
         self.downloaded = None # True or false depending on wether in cache.
 
         self.http_errors = 0
         self.errors = 0
 
-
     def __str__(self):
         return f"<{self.access_object} {self.event_type} {self.dt}>"
 
-    def exists(self):
-        return self.cache_file.exists()
+    def run(self):
+        raise NotImplementedError()
 
     @classmethod
     def make_tasks(cls, objects: Sequence[CityIqObject], event_types: Sequence[str],
@@ -72,7 +94,7 @@ class EventTask(object):
         if isinstance(event_types, str):
             event_types = [event_types]
 
-        for dt in generate_days(start_date, end_date):
+        for dt, _ in generate_days(start_date, end_date):
             for o in objects:
                 for et in event_types:
                     yield cls(o, et, dt)
@@ -82,6 +104,24 @@ class EventTask(object):
 
 class DownloadTask(EventTask):
     """An event task that downloads the events for a single location or asset, day and event type"""
+
+    def __init__(self, access_object: CityIqObject, event_type, dt: date):
+        super().__init__(access_object, event_type, dt)
+
+        self._cache_file = None
+
+    @property
+    def cache_file(self):
+        if self._cache_file is None:
+            self._cache_file = self.access_object.get_day_cache_file(self.event_type, self.dt)
+
+        return self._cache_file
+
+    def exists(self):
+        return self.cache_file.exists()
+
+    def run(self):
+        return self.robust_download()
 
     def robust_download(self):
         """
@@ -98,10 +138,14 @@ class DownloadTask(EventTask):
         last_exception = None
         for i in range(5):  # 5 retries on errors
             try:
+                if self.cache_file.exists():
+                    self.downloaded = False
+                else:
+                    self.downloaded = True
 
-                r = self.access_object.get_events_day(self.event_type, self.dt)
+                    self.cache_file.run()
 
-                break
+                return self.downloaded
             except HTTPError as e:
                 logger.error('{} Failed. Retry in  {} seconds: {}'.format(str(self), delay, e))
                 err = {
@@ -138,15 +182,7 @@ class DownloadTask(EventTask):
                 logger.error(f"{last_exception} Giving up.")
                 raise last_exception
 
-        #logger.debug(f"Finished fetch task {str(self)}")
-
-        d = {'dt': self.dt,
-             'obj_type': str(type(self.access_object)),
-             'obj_uid': self.access_object.uid,
-             'event_type': self.event_type,
-             'response': r}
-
-        return d
+        return last_exception
 
 
 class DataframeTask(EventTask):

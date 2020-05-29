@@ -18,7 +18,7 @@ __license__ = "mit"
 _logger = logging.getLogger(__name__)
 
 
-def parse_args(args):
+def make_parser():
     """Parse command line parameters
 
     Args:
@@ -27,8 +27,9 @@ def parse_args(args):
     Returns:
       :obj:`argparse.Namespace`: command line parameters namespace
     """
-    parser = argparse.ArgumentParser(
-        description="Create or print a CityIq module configuration file")
+
+    parser = argparse.ArgumentParser(description=make_parser().__doc__)
+
     parser.add_argument('--version', action='version', version='cityiq {ver}'.format(ver=__version__))
 
     group = parser.add_mutually_exclusive_group()
@@ -43,8 +44,7 @@ def parse_args(args):
 
     group.add_argument('-p', '--print', help='Print the config file', action='store_true')
 
-    return parser, parser.parse_args(args)
-
+    return parser
 
 def main(args):
     """Main entry point allowing external calls
@@ -55,7 +55,9 @@ def main(args):
 
     from cityiq import Config
 
-    parser, args = parse_args(args)
+    parser = make_parser()
+
+    args =  parser.parse_args(args)
 
     config = Config()
 

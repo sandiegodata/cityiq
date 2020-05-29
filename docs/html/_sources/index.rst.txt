@@ -21,16 +21,21 @@ Configuration
 =============
 
 .. automodule:: cityiq.config
+    :noindex:
 
-Basic Use
-=========
+
+Basic CLI Use
+=============
+
+.. automodule:: cityiq.cli
+    :noindex:
+
+Basic API Use
+=============
 
 .. automodule:: cityiq.api
+    :noindex:
 
-Scraping
-========
-
-.. automodule:: cityiq.cli.events
 
 
 Contents
