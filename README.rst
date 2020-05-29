@@ -95,6 +95,8 @@ Set the version with a tag. The version numbers are specified with PEP440_ ::
 
     $ git tag 0.0.1
 
+Be sure to push with ``git push --tags``
+
 Publishing
 ----------
 
