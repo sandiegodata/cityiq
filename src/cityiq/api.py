@@ -71,7 +71,6 @@ from cityiq.util import event_to_zone
 from cityiq.util import run_async
 from dateutil.parser import parse
 from slugify import slugify
-from tqdm import tqdm
 
 from .config import Config
 from .exceptions import ConfigurationError, TimeError, CityIqError
