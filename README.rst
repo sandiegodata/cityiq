@@ -27,7 +27,7 @@ Edit the file with your credentials and other information for your system. The
 default file is configured for the San Diego system, but you may have to `update
 the client id and password <https://www.sandiego.gov/sustainability/energy-and-water-efficiency/programs-projects/smart-city>`_.
 
-You can list the nodes, assets and locations in the system with the :program:`ciq_nodes`
+You can list the nodes, assets and locations in the system with the `ciq_nodes`
 program:
 
 .. code-block:: bash
