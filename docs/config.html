@@ -1,0 +1,150 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Configuration &#8212; cityiq 0.1.5 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Using the CLI" href="cli.html" />
+    <link rel="prev" title="CityIQ API" href="index.html" />
+
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+
+
+          <div class="body" role="main">
+
+  <div class="section" id="configuration">
+<h1>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h1>
+<p>The CityIq module and programs require a configuration file that holds
+credentials and urls. You can generate a default configuration with</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ciq_config</span>  <span class="o">-</span><span class="n">w</span>
+</pre></div>
+</div>
+<p>The generated file is configured for the San Diego system. To use this system,
+you will just need to add your client id and secret to the file. ( The default
+file has credentials for San Diego, which may work if they are not expired . )</p>
+<p>The <code class="xref py py-class docutils literal notranslate"><span class="pre">Config</span></code> object can be constructed on a path
+where the config file is location. If none is specified it will look for this
+file in several places, in this order:
+s</p>
+<ul class="simple">
+<li><p>The path specified in the constructor</p></li>
+<li><p>The path specified by the <code class="docutils literal notranslate"><span class="pre">CITYIQ_CONFIG</span></code> env var</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.city-iq.yaml</span></code> in the current dir</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">city-iq.yaml</span></code> in the current dir</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.city-iq.yaml</span></code> in the user’s home dir</p></li>
+</ul>
+<p>Each of the configuration files can be overridden with a keyword in the
+<code class="docutils literal notranslate"><span class="pre">Config</span></code> object constructor, and each value can be accessed as an attribute
+or an index. The nested cache values are special. To access or set them, preceede the key
+with <cite>cache_</cite>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">c</span> <span class="o">=</span> <span class="n">Config</span><span class="p">(</span><span class="n">default_zone</span> <span class="o">=</span> <span class="s1">&#39;SD-IE-TRAFFIC&#39;</span><span class="p">,</span> <span class="n">cache_objects</span><span class="o">=</span><span class="s1">&#39;/Volumes/foobar)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">default_zone</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s1">&#39;cache_objects&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>You can also set configuration values with environmental variables, by
+uppercasing the variable name and prefixing it with <code class="docutils literal notranslate"><span class="pre">CITYIQ_</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nv">CITYIQ_CACHE_OBJECTS</span><span class="o">=</span>/tmp/foo/bar ciq_config -p
+
+...
+cache_errors: /Volumes/SSD_Extern/cityiq2/errors
+cache_meta: /Volumes/SSD_Extern/cityiq2/meta
+cache_objects: /tmp/foo/bar
+...
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">cityiq</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Using the CLI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Using the API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/modules.html">Module Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">CityIQ API</a></li>
+      <li>Next: <a href="cli.html" title="next chapter">Using the CLI</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Eric Busboom.
+
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.0.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+
+      |
+      <a href="_sources/config.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+
+
+
+  </body>
+</html>

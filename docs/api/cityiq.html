@@ -1,0 +1,1024 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>cityiq package &#8212; cityiq 0.1.5 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="cityiq.cli package" href="cityiq.cli.html" />
+    <link rel="prev" title="cityiq" href="modules.html" />
+
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+
+
+          <div class="body" role="main">
+
+  <div class="section" id="cityiq-package">
+<h1>cityiq package<a class="headerlink" href="#cityiq-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="cityiq.cli.html">cityiq.cli package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cityiq.cli.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cityiq.cli.html#module-cityiq.cli.config">cityiq.cli.config module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cityiq.cli.html#module-cityiq.cli.events">cityiq.cli.events module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cityiq.cli.html#module-cityiq.cli.nodes">cityiq.cli.nodes module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cityiq.cli.html#module-cityiq.cli.util">cityiq.cli.util module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cityiq.cli.html#module-cityiq.cli">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-cityiq.api">
+<span id="cityiq-api-module"></span><h2>cityiq.api module<a class="headerlink" href="#module-cityiq.api" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="cityiq.api.CacheFile">
+<em class="property">class </em><code class="sig-prename descclassname">cityiq.api.</code><code class="sig-name descname">CacheFile</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cache_path</span></em>, <em class="sig-param"><span class="n">access_object</span></em>, <em class="sig-param"><span class="n">fetch_func</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">event_type</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">end_time</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">group</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">format</span><span class="o">=</span><span class="default_value">'json'</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CacheFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CacheFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.6/library/functions.html#object" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Represents a cached file of records for one location or asset, one type of event,
+and one day. Or, if the date and event type are omitted, just the information
+about an asset or location</p>
+<dl class="py method">
+<dt id="cityiq.api.CacheFile.delete">
+<code class="sig-name descname">delete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CacheFile.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CacheFile.delete" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CacheFile.exists">
+<code class="sig-name descname">exists</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CacheFile.exists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CacheFile.exists" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CacheFile.object_prefix">
+<em class="property">classmethod </em><code class="sig-name descname">object_prefix</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">obj</span></em>, <em class="sig-param"><span class="n">event_type</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CacheFile.object_prefix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CacheFile.object_prefix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CacheFile.path">
+<em class="property">property </em><code class="sig-name descname">path</code><a class="headerlink" href="#cityiq.api.CacheFile.path" title="Permalink to this definition">¶</a></dt>
+<dd><p>The filesystem path to the cache file</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CacheFile.read">
+<code class="sig-name descname">read</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CacheFile.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CacheFile.read" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CacheFile.run">
+<code class="sig-name descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CacheFile.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CacheFile.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CacheFile.write">
+<code class="sig-name descname">write</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">result</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CacheFile.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CacheFile.write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write Json data, or a CSV if the result valule is a dataframe</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="cityiq.api.CityIq">
+<em class="property">class </em><code class="sig-prename descclassname">cityiq.api.</code><code class="sig-name descname">CityIq</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">cache_metadata</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIq"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIq" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.6/library/functions.html#object" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py attribute">
+<dt id="cityiq.api.CityIq.asset_url_suffix">
+<code class="sig-name descname">asset_url_suffix</code><em class="property"> = '/api/v2/metadata/assets/{uid}'</em><a class="headerlink" href="#cityiq.api.CityIq.asset_url_suffix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.assets">
+<em class="property">property </em><code class="sig-name descname">assets</code><a class="headerlink" href="#cityiq.api.CityIq.assets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return all system assets</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.assets_by_event">
+<code class="sig-name descname">assets_by_event</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event_types</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIq.assets_by_event"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIq.assets_by_event" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="cityiq.api.CityIq.assets_search_suffix">
+<code class="sig-name descname">assets_search_suffix</code><em class="property"> = '/api/v2/metadata/assets/search'</em><a class="headerlink" href="#cityiq.api.CityIq.assets_search_suffix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.cache_events">
+<code class="sig-name descname">cache_events</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">obj</span></em>, <em class="sig-param"><span class="n">event_type</span></em>, <em class="sig-param"><span class="n">start_time</span></em>, <em class="sig-param"><span class="n">end_time</span></em>, <em class="sig-param"><span class="n">bbox</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIq.cache_events"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIq.cache_events" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.cameras">
+<em class="property">property </em><code class="sig-name descname">cameras</code><a class="headerlink" href="#cityiq.api.CityIq.cameras" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return camera assets</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.clear_meta_cache">
+<code class="sig-name descname">clear_meta_cache</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIq.clear_meta_cache"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIq.clear_meta_cache" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.convert_time">
+<code class="sig-name descname">convert_time</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIq.convert_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIq.convert_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a variety of time formats into the millisecond format
+used by the CityIQ interface. Converts naieve times to the configured timezone</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.em_sensors">
+<em class="property">property </em><code class="sig-name descname">em_sensors</code><a class="headerlink" href="#cityiq.api.CityIq.em_sensors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return some other kind of sensor. Electro-magnetic?</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.env_sensors">
+<em class="property">property </em><code class="sig-name descname">env_sensors</code><a class="headerlink" href="#cityiq.api.CityIq.env_sensors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return environmental sensors</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="cityiq.api.CityIq.events_url_suffix">
+<code class="sig-name descname">events_url_suffix</code><em class="property"> = '/api/v2/event/locations/events'</em><a class="headerlink" href="#cityiq.api.CityIq.events_url_suffix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.get_asset">
+<code class="sig-name descname">get_asset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">asset_uid</span></em>, <em class="sig-param"><span class="n">use_cache</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIq.get_asset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIq.get_asset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.get_assets">
+<code class="sig-name descname">get_assets</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">device_type</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">zone</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">bbox</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">use_cache</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIq.get_assets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIq.get_assets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.get_cache_files">
+<code class="sig-name descname">get_cache_files</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">objects</span></em>, <em class="sig-param"><span class="n">event_types</span></em>, <em class="sig-param"><span class="n">start_time</span></em>, <em class="sig-param"><span class="n">end_time</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIq.get_cache_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIq.get_cache_files" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.get_cached_events">
+<code class="sig-name descname">get_cached_events</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">obj</span></em>, <em class="sig-param"><span class="n">event_type</span></em>, <em class="sig-param"><span class="n">start_time</span></em>, <em class="sig-param"><span class="n">end_time</span></em>, <em class="sig-param"><span class="n">bbox</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIq.get_cached_events"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIq.get_cached_events" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.get_location">
+<code class="sig-name descname">get_location</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">location_uid</span></em>, <em class="sig-param"><span class="n">use_cache</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIq.get_location"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIq.get_location" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a single location by its uid</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.get_locations">
+<code class="sig-name descname">get_locations</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">location_type</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">zone</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">bbox</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIq.get_locations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIq.get_locations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all locations, options for a zone or bounding box</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.get_meta_cache">
+<code class="sig-name descname">get_meta_cache</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIq.get_meta_cache"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIq.get_meta_cache" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.get_meta_pages">
+<code class="sig-name descname">get_meta_pages</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">url</span></em>, <em class="sig-param"><span class="n">params</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">query</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">zone</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">bbox</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIq.get_meta_pages"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIq.get_meta_pages" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.http_get">
+<code class="sig-name descname">http_get</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">url</span></em>, <em class="sig-param"><span class="n">zone</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">params</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIq.http_get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIq.http_get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the events of one type
+:param start_time:
+:param span:  time span in seconds
+:param event_type:
+:param tz_name:
+:return:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.load_locations">
+<code class="sig-name descname">load_locations</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIq.load_locations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIq.load_locations" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="cityiq.api.CityIq.location_url_suffix">
+<code class="sig-name descname">location_url_suffix</code><em class="property"> = '/api/v2/metadata/locations/{uid}'</em><a class="headerlink" href="#cityiq.api.CityIq.location_url_suffix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.locations">
+<em class="property">property </em><code class="sig-name descname">locations</code><a class="headerlink" href="#cityiq.api.CityIq.locations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return all locations</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.locations_by_event">
+<code class="sig-name descname">locations_by_event</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event_types</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIq.locations_by_event"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIq.locations_by_event" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.locations_dataframe">
+<em class="property">property </em><code class="sig-name descname">locations_dataframe</code><a class="headerlink" href="#cityiq.api.CityIq.locations_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="cityiq.api.CityIq.locations_search_suffix">
+<code class="sig-name descname">locations_search_suffix</code><em class="property"> = '/api/v2/metadata/locations/search'</em><a class="headerlink" href="#cityiq.api.CityIq.locations_search_suffix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.make_tasks">
+<code class="sig-name descname">make_tasks</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">objects</span></em>, <em class="sig-param"><span class="n">events</span></em>, <em class="sig-param"><span class="n">start_time</span></em>, <em class="sig-param"><span class="n">end_time</span></em>, <em class="sig-param"><span class="n">task_class</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIq.make_tasks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIq.make_tasks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch, and cache, events requests for a set of assets or locations</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.mics">
+<em class="property">property </em><code class="sig-name descname">mics</code><a class="headerlink" href="#cityiq.api.CityIq.mics" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return microphone assets</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.nodes">
+<em class="property">property </em><code class="sig-name descname">nodes</code><a class="headerlink" href="#cityiq.api.CityIq.nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return all nodes</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="cityiq.api.CityIq.object_sub_dir">
+<code class="sig-name descname">object_sub_dir</code><em class="property"> = 'object'</em><a class="headerlink" href="#cityiq.api.CityIq.object_sub_dir" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.parking_zones">
+<em class="property">property </em><code class="sig-name descname">parking_zones</code><a class="headerlink" href="#cityiq.api.CityIq.parking_zones" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.process_url">
+<code class="sig-name descname">process_url</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">url</span></em>, <em class="sig-param"><span class="n">params</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIq.process_url"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIq.process_url" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.request_headers">
+<code class="sig-name descname">request_headers</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">zone</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIq.request_headers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIq.request_headers" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.run_async">
+<code class="sig-name descname">run_async</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tasks</span></em>, <em class="sig-param"><span class="n">workers</span><span class="o">=</span><span class="default_value">4</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIq.run_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIq.run_async" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run a set of tasks, created with make_tasks, with multiple workers</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.run_sync">
+<code class="sig-name descname">run_sync</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tasks</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIq.run_sync"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIq.run_sync" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run all of the tasks, one at a time, and return the combined results</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.set_meta_cache">
+<code class="sig-name descname">set_meta_cache</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIq.set_meta_cache"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIq.set_meta_cache" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.token">
+<em class="property">property </em><code class="sig-name descname">token</code><a class="headerlink" href="#cityiq.api.CityIq.token" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.total_bounds">
+<em class="property">property </em><code class="sig-name descname">total_bounds</code><a class="headerlink" href="#cityiq.api.CityIq.total_bounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a bounding box for the system from all of the assets. This will be affected by the
+bbox set in the config, so it should usually be smaller than the one in the config</p>
+<p>Order is: lat_max, lon_min, lat_min, lon_max</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.total_bounds_str">
+<em class="property">property </em><code class="sig-name descname">total_bounds_str</code><a class="headerlink" href="#cityiq.api.CityIq.total_bounds_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Total bounds bounding box, in the form of the city_iq config</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.traffic_lanes">
+<em class="property">property </em><code class="sig-name descname">traffic_lanes</code><a class="headerlink" href="#cityiq.api.CityIq.traffic_lanes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIq.walkways">
+<em class="property">property </em><code class="sig-name descname">walkways</code><a class="headerlink" href="#cityiq.api.CityIq.walkways" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="cityiq.api.CityIqObject">
+<em class="property">class </em><code class="sig-prename descclassname">cityiq.api.</code><code class="sig-name descname">CityIqObject</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">client</span></em>, <em class="sig-param"><span class="n">data</span></em>, <em class="sig-param"><span class="n">use_cache</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIqObject"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIqObject" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.6/library/functions.html#object" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py method">
+<dt id="cityiq.api.CityIqObject.as_dict">
+<code class="sig-name descname">as_dict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">wkt</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIqObject.as_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIqObject.as_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIqObject.cache_file">
+<code class="sig-name descname">cache_file</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fetch_func</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">event_type</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">group</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">format</span><span class="o">=</span><span class="default_value">'csv'</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIqObject.cache_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIqObject.cache_file" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIqObject.events_url">
+<em class="property">property </em><code class="sig-name descname">events_url</code><a class="headerlink" href="#cityiq.api.CityIqObject.events_url" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the URL for fetching events, called from get_events() in the base class.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIqObject.geometry">
+<em class="property">property </em><code class="sig-name descname">geometry</code><a class="headerlink" href="#cityiq.api.CityIqObject.geometry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a Shapely polygon for the coordinates</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIqObject.get_events">
+<code class="sig-name descname">get_events</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event_type</span></em>, <em class="sig-param"><span class="n">start_time</span></em>, <em class="sig-param"><span class="n">end_time</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIqObject.get_events"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIqObject.get_events" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIqObject.update">
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIqObject.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIqObject.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make an uncached call to the API to replace the data in this object</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.api.CityIqObject.write">
+<code class="sig-name descname">write</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#CityIqObject.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.CityIqObject.write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write data to the cache</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="cityiq.api.Event">
+<em class="property">class </em><code class="sig-prename descclassname">cityiq.api.</code><code class="sig-name descname">Event</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">client</span></em>, <em class="sig-param"><span class="n">data</span></em>, <em class="sig-param"><span class="n">use_cache</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#Event"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.Event" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cityiq.api.CityIqObject" title="cityiq.api.CityIqObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">cityiq.api.CityIqObject</span></code></a></p>
+<dl class="py attribute">
+<dt id="cityiq.api.Event.types">
+<code class="sig-name descname">types</code><em class="property"> = ['PKIN', 'PKOUT', 'PEDEVT', 'TFEVT', 'TEMPERATURE', 'PRESSURE', 'ORIENTATION', 'METROLOGY', 'HUMIDITY', 'ENERGY_TIMESERIES', 'ENERGY_ALERT']</em><a class="headerlink" href="#cityiq.api.Event.types" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="cityiq.api.to_date">
+<code class="sig-prename descclassname">cityiq.api.</code><code class="sig-name descname">to_date</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/api.html#to_date"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.api.to_date" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-cityiq.asset">
+<span id="cityiq-asset-module"></span><h2>cityiq.asset module<a class="headerlink" href="#module-cityiq.asset" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="cityiq.asset.Asset">
+<em class="property">class </em><code class="sig-prename descclassname">cityiq.asset.</code><code class="sig-name descname">Asset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">client</span></em>, <em class="sig-param"><span class="n">data</span></em>, <em class="sig-param"><span class="n">use_cache</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/asset.html#Asset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.asset.Asset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cityiq.api.CityIqObject" title="cityiq.api.CityIqObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">cityiq.api.CityIqObject</span></code></a></p>
+<dl class="py method">
+<dt id="cityiq.asset.Asset.children">
+<em class="property">property </em><code class="sig-name descname">children</code><a class="headerlink" href="#cityiq.asset.Asset.children" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sub assets of this asset</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="cityiq.asset.Asset.children_url_suffix">
+<code class="sig-name descname">children_url_suffix</code><em class="property"> = '/api/v2/metadata/assets/{}/subAssets'</em><a class="headerlink" href="#cityiq.asset.Asset.children_url_suffix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="cityiq.asset.Asset.dclass_map">
+<code class="sig-name descname">dclass_map</code><em class="property"> = {'CAMERA': &lt;class 'cityiq.asset.CameraAsset'&gt;, 'EM_SENSOR': &lt;class 'cityiq.asset.EmSensorAsset'&gt;, 'ENV_SENSOR': &lt;class 'cityiq.asset.EnvSensorAsset'&gt;, 'MIC': &lt;class 'cityiq.asset.MicSensorAsset'&gt;, 'NODE': &lt;class 'cityiq.asset.NodeAsset'&gt;}</em><a class="headerlink" href="#cityiq.asset.Asset.dclass_map" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.asset.Asset.detail">
+<em class="property">property </em><code class="sig-name descname">detail</code><a class="headerlink" href="#cityiq.asset.Asset.detail" title="Permalink to this definition">¶</a></dt>
+<dd><p>Asset details, which appears to be just re-fetching the object data.
+On some systems it may return additional data.</p>
+<p>Most importantly, the read is not cached, so it can be used to return the
+online/offline state of an asset without a time delay.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="cityiq.asset.Asset.detail_url_suffix">
+<code class="sig-name descname">detail_url_suffix</code><em class="property"> = '/api/v2/metadata/assets/{}'</em><a class="headerlink" href="#cityiq.asset.Asset.detail_url_suffix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.asset.Asset.event_type">
+<code class="sig-name descname">event_type</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">type</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/asset.html#Asset.event_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.asset.Asset.event_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a specific event type record</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.asset.Asset.event_types">
+<em class="property">property </em><code class="sig-name descname">event_types</code><a class="headerlink" href="#cityiq.asset.Asset.event_types" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return event types records</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="cityiq.asset.Asset.events_url_suffix">
+<code class="sig-name descname">events_url_suffix</code><em class="property"> = '/api/v2/event/assets/{uid}/events'</em><a class="headerlink" href="#cityiq.asset.Asset.events_url_suffix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.asset.Asset.generate_events">
+<code class="sig-name descname">generate_events</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event_type</span></em>, <em class="sig-param"><span class="n">start_time</span></em>, <em class="sig-param"><span class="n">end_time</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/asset.html#Asset.generate_events"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.asset.Asset.generate_events" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.asset.Asset.get_events">
+<code class="sig-name descname">get_events</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event_type</span></em>, <em class="sig-param"><span class="n">start_time</span></em>, <em class="sig-param"><span class="n">end_time</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/asset.html#Asset.get_events"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.asset.Asset.get_events" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.asset.Asset.has_events">
+<code class="sig-name descname">has_events</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">events</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/asset.html#Asset.has_events"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.asset.Asset.has_events" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.asset.Asset.lat">
+<em class="property">property </em><code class="sig-name descname">lat</code><a class="headerlink" href="#cityiq.asset.Asset.lat" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.asset.Asset.locations">
+<em class="property">property </em><code class="sig-name descname">locations</code><a class="headerlink" href="#cityiq.asset.Asset.locations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Locations at this asset</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="cityiq.asset.Asset.locations_url_suffix">
+<code class="sig-name descname">locations_url_suffix</code><em class="property"> = '/api/v2/metadata/assets/{}/locations'</em><a class="headerlink" href="#cityiq.asset.Asset.locations_url_suffix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.asset.Asset.lon">
+<em class="property">property </em><code class="sig-name descname">lon</code><a class="headerlink" href="#cityiq.asset.Asset.lon" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="cityiq.asset.Asset.object_sub_dir">
+<code class="sig-name descname">object_sub_dir</code><em class="property"> = 'asset'</em><a class="headerlink" href="#cityiq.asset.Asset.object_sub_dir" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.asset.Asset.parent">
+<em class="property">property </em><code class="sig-name descname">parent</code><a class="headerlink" href="#cityiq.asset.Asset.parent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="cityiq.asset.Asset.row_header">
+<code class="sig-name descname">row_header</code><em class="property"> = ['assetUid', 'assetType', 'parentAssetUid', 'mediaType', 'events', 'geometry']</em><a class="headerlink" href="#cityiq.asset.Asset.row_header" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="cityiq.asset.Asset.types">
+<code class="sig-name descname">types</code><em class="property"> = ['NODE', 'EM_SENSOR', 'MIC', 'ENV_SENSOR', 'CAMERA']</em><a class="headerlink" href="#cityiq.asset.Asset.types" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.asset.Asset.uid">
+<em class="property">property </em><code class="sig-name descname">uid</code><a class="headerlink" href="#cityiq.asset.Asset.uid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="cityiq.asset.Asset.uid_key">
+<code class="sig-name descname">uid_key</code><em class="property"> = 'assetUid'</em><a class="headerlink" href="#cityiq.asset.Asset.uid_key" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="cityiq.asset.CameraAsset">
+<em class="property">class </em><code class="sig-prename descclassname">cityiq.asset.</code><code class="sig-name descname">CameraAsset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">client</span></em>, <em class="sig-param"><span class="n">data</span></em>, <em class="sig-param"><span class="n">use_cache</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/asset.html#CameraAsset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.asset.CameraAsset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cityiq.asset.Asset" title="cityiq.asset.Asset"><code class="xref py py-class docutils literal notranslate"><span class="pre">cityiq.asset.Asset</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="cityiq.asset.EmSensorAsset">
+<em class="property">class </em><code class="sig-prename descclassname">cityiq.asset.</code><code class="sig-name descname">EmSensorAsset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">client</span></em>, <em class="sig-param"><span class="n">data</span></em>, <em class="sig-param"><span class="n">use_cache</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/asset.html#EmSensorAsset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.asset.EmSensorAsset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cityiq.asset.Asset" title="cityiq.asset.Asset"><code class="xref py py-class docutils literal notranslate"><span class="pre">cityiq.asset.Asset</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="cityiq.asset.EnvSensorAsset">
+<em class="property">class </em><code class="sig-prename descclassname">cityiq.asset.</code><code class="sig-name descname">EnvSensorAsset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">client</span></em>, <em class="sig-param"><span class="n">data</span></em>, <em class="sig-param"><span class="n">use_cache</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/asset.html#EnvSensorAsset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.asset.EnvSensorAsset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cityiq.asset.Asset" title="cityiq.asset.Asset"><code class="xref py py-class docutils literal notranslate"><span class="pre">cityiq.asset.Asset</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="cityiq.asset.MicSensorAsset">
+<em class="property">class </em><code class="sig-prename descclassname">cityiq.asset.</code><code class="sig-name descname">MicSensorAsset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">client</span></em>, <em class="sig-param"><span class="n">data</span></em>, <em class="sig-param"><span class="n">use_cache</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/asset.html#MicSensorAsset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.asset.MicSensorAsset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cityiq.asset.Asset" title="cityiq.asset.Asset"><code class="xref py py-class docutils literal notranslate"><span class="pre">cityiq.asset.Asset</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="cityiq.asset.NodeAsset">
+<em class="property">class </em><code class="sig-prename descclassname">cityiq.asset.</code><code class="sig-name descname">NodeAsset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">client</span></em>, <em class="sig-param"><span class="n">data</span></em>, <em class="sig-param"><span class="n">use_cache</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/asset.html#NodeAsset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.asset.NodeAsset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cityiq.asset.Asset" title="cityiq.asset.Asset"><code class="xref py py-class docutils literal notranslate"><span class="pre">cityiq.asset.Asset</span></code></a></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-cityiq.clean_events">
+<span id="cityiq-clean-events-module"></span><h2>cityiq.clean_events module<a class="headerlink" href="#module-cityiq.clean_events" title="Permalink to this headline">¶</a></h2>
+<p>Clean events, removing duplicates</p>
+<dl class="py function">
+<dt id="cityiq.clean_events.augment_df">
+<code class="sig-prename descclassname">cityiq.clean_events.</code><code class="sig-name descname">augment_df</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">df</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/clean_events.html#augment_df"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.clean_events.augment_df" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="cityiq.clean_events.clean_events">
+<code class="sig-prename descclassname">cityiq.clean_events.</code><code class="sig-name descname">clean_events</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">s</span></em>, <em class="sig-param"><span class="n">use_tqdm</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">locations</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/clean_events.html#clean_events"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.clean_events.clean_events" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given an event scraper that has has</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="cityiq.clean_events.dedup_1s">
+<code class="sig-prename descclassname">cityiq.clean_events.</code><code class="sig-name descname">dedup_1s</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">df</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/clean_events.html#dedup_1s"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.clean_events.dedup_1s" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deduplicate by dropping events of sametype that occur in 1s window.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="cityiq.clean_events.dedup_rolling">
+<code class="sig-prename descclassname">cityiq.clean_events.</code><code class="sig-name descname">dedup_rolling</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">df</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/clean_events.html#dedup_rolling"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.clean_events.dedup_rolling" title="Permalink to this definition">¶</a></dt>
+<dd><p>Entry point for rolling count debouncing</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="cityiq.clean_events.plot_loc_norming">
+<code class="sig-prename descclassname">cityiq.clean_events.</code><code class="sig-name descname">plot_loc_norming</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/clean_events.html#plot_loc_norming"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.clean_events.plot_loc_norming" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="cityiq.clean_events.re_norm_location">
+<code class="sig-prename descclassname">cityiq.clean_events.</code><code class="sig-name descname">re_norm_location</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">df</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/clean_events.html#re_norm_location"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.clean_events.re_norm_location" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-cityiq.config">
+<span id="cityiq-config-module"></span><h2>cityiq.config module<a class="headerlink" href="#module-cityiq.config" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="cityiq.config.Config">
+<em class="property">class </em><code class="sig-prename descclassname">cityiq.config.</code><code class="sig-name descname">Config</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/config.html#Config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.config.Config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.6/library/functions.html#object" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py method">
+<dt id="cityiq.config.Config.dict">
+<em class="property">property </em><code class="sig-name descname">dict</code><a class="headerlink" href="#cityiq.config.Config.dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.config.Config.which">
+<em class="property">property </em><code class="sig-name descname">which</code><a class="headerlink" href="#cityiq.config.Config.which" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-cityiq.exceptions">
+<span id="cityiq-exceptions-module"></span><h2>cityiq.exceptions module<a class="headerlink" href="#module-cityiq.exceptions" title="Permalink to this headline">¶</a></h2>
+<dl class="py exception">
+<dt id="cityiq.exceptions.AuthenticationError">
+<em class="property">exception </em><code class="sig-prename descclassname">cityiq.exceptions.</code><code class="sig-name descname">AuthenticationError</code><a class="reference internal" href="../_modules/cityiq/exceptions.html#AuthenticationError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.exceptions.AuthenticationError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cityiq.exceptions.CityIqError" title="cityiq.exceptions.CityIqError"><code class="xref py py-class docutils literal notranslate"><span class="pre">cityiq.exceptions.CityIqError</span></code></a></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="cityiq.exceptions.CityIqError">
+<em class="property">exception </em><code class="sig-prename descclassname">cityiq.exceptions.</code><code class="sig-name descname">CityIqError</code><a class="reference internal" href="../_modules/cityiq/exceptions.html#CityIqError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.exceptions.CityIqError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#Exception" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></a></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="cityiq.exceptions.ConfigurationError">
+<em class="property">exception </em><code class="sig-prename descclassname">cityiq.exceptions.</code><code class="sig-name descname">ConfigurationError</code><a class="reference internal" href="../_modules/cityiq/exceptions.html#ConfigurationError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.exceptions.ConfigurationError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cityiq.exceptions.CityIqError" title="cityiq.exceptions.CityIqError"><code class="xref py py-class docutils literal notranslate"><span class="pre">cityiq.exceptions.CityIqError</span></code></a></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="cityiq.exceptions.TimeError">
+<em class="property">exception </em><code class="sig-prename descclassname">cityiq.exceptions.</code><code class="sig-name descname">TimeError</code><a class="reference internal" href="../_modules/cityiq/exceptions.html#TimeError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.exceptions.TimeError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cityiq.exceptions.CityIqError" title="cityiq.exceptions.CityIqError"><code class="xref py py-class docutils literal notranslate"><span class="pre">cityiq.exceptions.CityIqError</span></code></a></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-cityiq.location">
+<span id="cityiq-location-module"></span><h2>cityiq.location module<a class="headerlink" href="#module-cityiq.location" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="cityiq.location.Location">
+<em class="property">class </em><code class="sig-prename descclassname">cityiq.location.</code><code class="sig-name descname">Location</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">client</span></em>, <em class="sig-param"><span class="n">data</span></em>, <em class="sig-param"><span class="n">use_cache</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/location.html#Location"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.location.Location" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cityiq.api.CityIqObject" title="cityiq.api.CityIqObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">cityiq.api.CityIqObject</span></code></a></p>
+<dl class="py method">
+<dt id="cityiq.location.Location.assets">
+<em class="property">property </em><code class="sig-name descname">assets</code><a class="headerlink" href="#cityiq.location.Location.assets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assets at this location</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="cityiq.location.Location.assets_url_suffix">
+<code class="sig-name descname">assets_url_suffix</code><em class="property"> = '/api/v2/metadata/locations/{}/assets'</em><a class="headerlink" href="#cityiq.location.Location.assets_url_suffix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="cityiq.location.Location.dclass_map">
+<code class="sig-name descname">dclass_map</code><em class="property"> = {'PARKING_ZONE': &lt;class 'cityiq.location.ParkingZoneLocation'&gt;, 'TRAFFIC_LANE': &lt;class 'cityiq.location.TrafficLaneLocation'&gt;, 'WALKWAY': &lt;class 'cityiq.location.WalkwayLocation'&gt;}</em><a class="headerlink" href="#cityiq.location.Location.dclass_map" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.location.Location.detail">
+<em class="property">property </em><code class="sig-name descname">detail</code><a class="headerlink" href="#cityiq.location.Location.detail" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new Location after making a non-cached call to the API. The
+response value is cached, so this will update the cache.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="cityiq.location.Location.detail_url_suffix">
+<code class="sig-name descname">detail_url_suffix</code><em class="property"> = '/api/v2/metadata/locations/{}'</em><a class="headerlink" href="#cityiq.location.Location.detail_url_suffix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="cityiq.location.Location.events_url_suffix">
+<code class="sig-name descname">events_url_suffix</code><em class="property"> = '/api/v2/event/locations/{uid}/events'</em><a class="headerlink" href="#cityiq.location.Location.events_url_suffix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="cityiq.location.Location.object_sub_dir">
+<code class="sig-name descname">object_sub_dir</code><em class="property"> = 'location'</em><a class="headerlink" href="#cityiq.location.Location.object_sub_dir" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.location.Location.row">
+<em class="property">property </em><code class="sig-name descname">row</code><a class="headerlink" href="#cityiq.location.Location.row" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return most important fields in a row format</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="cityiq.location.Location.row_header">
+<code class="sig-name descname">row_header</code><em class="property"> = ['locationUid', 'locationType', 'parentLocationUid', 'geometry']</em><a class="headerlink" href="#cityiq.location.Location.row_header" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="cityiq.location.Location.types">
+<code class="sig-name descname">types</code><em class="property"> = ['WALKWAY', 'TRAFFIC_LANE', 'PARKING_ZONE']</em><a class="headerlink" href="#cityiq.location.Location.types" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.location.Location.uid">
+<em class="property">property </em><code class="sig-name descname">uid</code><a class="headerlink" href="#cityiq.location.Location.uid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="cityiq.location.Location.uid_key">
+<code class="sig-name descname">uid_key</code><em class="property"> = 'locationUid'</em><a class="headerlink" href="#cityiq.location.Location.uid_key" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="cityiq.location.ParkingZoneLocation">
+<em class="property">class </em><code class="sig-prename descclassname">cityiq.location.</code><code class="sig-name descname">ParkingZoneLocation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">client</span></em>, <em class="sig-param"><span class="n">data</span></em>, <em class="sig-param"><span class="n">use_cache</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/location.html#ParkingZoneLocation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.location.ParkingZoneLocation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cityiq.location.Location" title="cityiq.location.Location"><code class="xref py py-class docutils literal notranslate"><span class="pre">cityiq.location.Location</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="cityiq.location.TrafficLaneLocation">
+<em class="property">class </em><code class="sig-prename descclassname">cityiq.location.</code><code class="sig-name descname">TrafficLaneLocation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">client</span></em>, <em class="sig-param"><span class="n">data</span></em>, <em class="sig-param"><span class="n">use_cache</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/location.html#TrafficLaneLocation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.location.TrafficLaneLocation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cityiq.location.Location" title="cityiq.location.Location"><code class="xref py py-class docutils literal notranslate"><span class="pre">cityiq.location.Location</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="cityiq.location.WalkwayLocation">
+<em class="property">class </em><code class="sig-prename descclassname">cityiq.location.</code><code class="sig-name descname">WalkwayLocation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">client</span></em>, <em class="sig-param"><span class="n">data</span></em>, <em class="sig-param"><span class="n">use_cache</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/location.html#WalkwayLocation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.location.WalkwayLocation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cityiq.location.Location" title="cityiq.location.Location"><code class="xref py py-class docutils literal notranslate"><span class="pre">cityiq.location.Location</span></code></a></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-cityiq.task">
+<span id="cityiq-task-module"></span><h2>cityiq.task module<a class="headerlink" href="#module-cityiq.task" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="cityiq.task.DownloadTask">
+<em class="property">class </em><code class="sig-prename descclassname">cityiq.task.</code><code class="sig-name descname">DownloadTask</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">access_object</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#cityiq.api.CityIqObject" title="cityiq.api.CityIqObject">cityiq.api.CityIqObject</a></span></em>, <em class="sig-param"><span class="n">event_type</span></em>, <em class="sig-param"><span class="n">start_date</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3.6/library/datetime.html#datetime.date" title="(in Python v3.6)">datetime.date</a></span></em>, <em class="sig-param"><span class="n">end_date</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3.6/library/datetime.html#datetime.date" title="(in Python v3.6)">datetime.date</a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/task.html#DownloadTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.task.DownloadTask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cityiq.task.EventTask" title="cityiq.task.EventTask"><code class="xref py py-class docutils literal notranslate"><span class="pre">cityiq.task.EventTask</span></code></a></p>
+<dl class="py method">
+<dt id="cityiq.task.DownloadTask.make_tasks">
+<em class="property">classmethod </em><code class="sig-name descname">make_tasks</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">objects</span><span class="p">:</span> <span class="n">Sequence<span class="p">[</span><a class="reference internal" href="#cityiq.api.CityIqObject" title="cityiq.api.CityIqObject">cityiq.api.CityIqObject</a><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">event_types</span><span class="p">:</span> <span class="n">Sequence<span class="p">[</span><a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)">str</a><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">start_date</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3.6/library/datetime.html#datetime.date" title="(in Python v3.6)">datetime.date</a></span></em>, <em class="sig-param"><span class="n">end_date</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3.6/library/datetime.html#datetime.date" title="(in Python v3.6)">datetime.date</a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/task.html#DownloadTask.make_tasks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.task.DownloadTask.make_tasks" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.task.DownloadTask.run">
+<code class="sig-name descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/task.html#DownloadTask.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.task.DownloadTask.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="cityiq.task.EventTask">
+<em class="property">class </em><code class="sig-prename descclassname">cityiq.task.</code><code class="sig-name descname">EventTask</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">access_object</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#cityiq.api.CityIqObject" title="cityiq.api.CityIqObject">cityiq.api.CityIqObject</a></span></em>, <em class="sig-param"><span class="n">event_type</span></em>, <em class="sig-param"><span class="n">start_date</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3.6/library/datetime.html#datetime.date" title="(in Python v3.6)">datetime.date</a></span></em>, <em class="sig-param"><span class="n">end_date</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3.6/library/datetime.html#datetime.date" title="(in Python v3.6)">datetime.date</a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/task.html#EventTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.task.EventTask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.6/library/functions.html#object" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Base class for operations on a single object, event type and day. These tasks
+can be run in parallel and be subclassed to provide specific operations.</p>
+<dl class="py method">
+<dt id="cityiq.task.EventTask.make_tasks">
+<em class="property">classmethod </em><code class="sig-name descname">make_tasks</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">objects</span><span class="p">:</span> <span class="n">Sequence<span class="p">[</span><a class="reference internal" href="#cityiq.api.CityIqObject" title="cityiq.api.CityIqObject">cityiq.api.CityIqObject</a><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">event_types</span><span class="p">:</span> <span class="n">Sequence<span class="p">[</span><a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)">str</a><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">start_date</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3.6/library/datetime.html#datetime.date" title="(in Python v3.6)">datetime.date</a></span></em>, <em class="sig-param"><span class="n">end_date</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3.6/library/datetime.html#datetime.date" title="(in Python v3.6)">datetime.date</a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/task.html#EventTask.make_tasks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.task.EventTask.make_tasks" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.task.EventTask.run">
+<code class="sig-name descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/task.html#EventTask.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.task.EventTask.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="cityiq.task.EventWorker">
+<em class="property">class </em><code class="sig-prename descclassname">cityiq.task.</code><code class="sig-name descname">EventWorker</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">client</span></em>, <em class="sig-param"><span class="n">events</span></em>, <em class="sig-param"><span class="n">queue</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/task.html#EventWorker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.task.EventWorker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.6/library/threading.html#threading.Thread" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">threading.Thread</span></code></a></p>
+<p>Thread worker for websocket events</p>
+<dl class="py method">
+<dt id="cityiq.task.EventWorker.events_async">
+<em class="property">static </em><code class="sig-name descname">events_async</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">client</span></em>, <em class="sig-param"><span class="n">events</span><span class="o">=</span><span class="default_value">['PKIN', 'PKOUT']</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/task.html#EventWorker.events_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.task.EventWorker.events_async" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use the websocket to get events. The websocket is run in a thread, and this
+function is a generator that returns results.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="cityiq.task.EventWorker.run">
+<code class="sig-name descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3.6/library/constants.html#None" title="(in Python v3.6)">None</a><a class="reference internal" href="../_modules/cityiq/task.html#EventWorker.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.task.EventWorker.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method representing the thread’s activity.</p>
+<p>You may override this method in a subclass. The standard run() method
+invokes the callable object passed to the object’s constructor as the
+target argument, if any, with sequential and keyword arguments taken
+from the args and kwargs arguments, respectively.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="cityiq.task.ensure_date">
+<code class="sig-prename descclassname">cityiq.task.</code><code class="sig-name descname">ensure_date</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">v</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/task.html#ensure_date"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.task.ensure_date" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="cityiq.task.generate_days">
+<code class="sig-prename descclassname">cityiq.task.</code><code class="sig-name descname">generate_days</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">start_time</span></em>, <em class="sig-param"><span class="n">end_time</span></em>, <em class="sig-param"><span class="n">include_end</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/task.html#generate_days"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.task.generate_days" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate day ranges for the request</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start_time</strong> – </p></li>
+<li><p><strong>end_time</strong> – </p></li>
+<li><p><strong>include_end</strong> – If True, range will include end date, if False, it will stop one day before</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="cityiq.task.generate_months">
+<code class="sig-prename descclassname">cityiq.task.</code><code class="sig-name descname">generate_months</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">start_time</span></em>, <em class="sig-param"><span class="n">end_time</span></em>, <em class="sig-param"><span class="n">include_end</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/task.html#generate_months"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.task.generate_months" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate month ranges from the start time to the end time</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start_time</strong> – </p></li>
+<li><p><strong>end_time</strong> – </p></li>
+<li><p><strong>include_end</strong> – If True, range will include end date, if False, it will stop one day before</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="cityiq.task.grouper">
+<code class="sig-prename descclassname">cityiq.task.</code><code class="sig-name descname">grouper</code><span class="sig-paren">(</span><em class="sig-param">3</em>, <em class="sig-param">'abcdefg'</em>, <em class="sig-param">'x') --&gt; ('a'</em>, <em class="sig-param">'b'</em>, <em class="sig-param">'c')</em>, <em class="sig-param">('d'</em>, <em class="sig-param">'e'</em>, <em class="sig-param">'f')</em>, <em class="sig-param">('g'</em>, <em class="sig-param">'x'</em>, <em class="sig-param">'x'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/task.html#grouper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.task.grouper" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="cityiq.task.request_ranges">
+<code class="sig-prename descclassname">cityiq.task.</code><code class="sig-name descname">request_ranges</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">start_date</span></em>, <em class="sig-param"><span class="n">end_date</span></em>, <em class="sig-param"><span class="n">extant</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/task.html#request_ranges"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.task.request_ranges" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-cityiq.token">
+<span id="cityiq-token-module"></span><h2>cityiq.token module<a class="headerlink" href="#module-cityiq.token" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="cityiq.token.get_cached_token">
+<code class="sig-prename descclassname">cityiq.token.</code><code class="sig-name descname">get_cached_token</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cache_path</span></em>, <em class="sig-param"><span class="n">uaa</span></em>, <em class="sig-param"><span class="n">client</span></em>, <em class="sig-param"><span class="n">secret</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/token.html#get_cached_token"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.token.get_cached_token" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a cached access token from the CityIQ service. Returns just the token. Use _get_token() to get the
+full response</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cache_path</strong> – Directory where cached token will be stored, if a directory or token name if a file</p></li>
+<li><p><strong>uaa</strong> – Url to the user authentication service</p></li>
+<li><p><strong>client</strong> – </p></li>
+<li><p><strong>secret</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A token string</p>
+</dd>
+</dl>
+<p>If a directory is specified in cache_dir, the file name will be ‘cityiq-token-&lt;crc&gt;.json’, with the CRC32 of the
+source url. The token will be expired after 8 hours.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="cityiq.token.get_token">
+<code class="sig-prename descclassname">cityiq.token.</code><code class="sig-name descname">get_token</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">uaa</span></em>, <em class="sig-param"><span class="n">client</span></em>, <em class="sig-param"><span class="n">secret</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/token.html#get_token"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.token.get_token" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an access token from the CityIQ service. Returns just the token. Use _get_token() to get the full response</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>uaa</strong> – Url to the user authentication service</p></li>
+<li><p><strong>client</strong> – </p></li>
+<li><p><strong>secret</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-cityiq.util">
+<span id="cityiq-util-module"></span><h2>cityiq.util module<a class="headerlink" href="#module-cityiq.util" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="cityiq.util.current_time">
+<code class="sig-prename descclassname">cityiq.util.</code><code class="sig-name descname">current_time</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/util.html#current_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.util.current_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the epoch time in miliseconds</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="cityiq.util.event_to_location_type">
+<code class="sig-prename descclassname">cityiq.util.</code><code class="sig-name descname">event_to_location_type</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event_type</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/util.html#event_to_location_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.util.event_to_location_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="cityiq.util.event_to_zone">
+<code class="sig-prename descclassname">cityiq.util.</code><code class="sig-name descname">event_to_zone</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config</span></em>, <em class="sig-param"><span class="n">event_type</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/util.html#event_to_zone"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.util.event_to_zone" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="cityiq.util.event_type_to_location_type">
+<code class="sig-prename descclassname">cityiq.util.</code><code class="sig-name descname">event_type_to_location_type</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event_type</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/util.html#event_type_to_location_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.util.event_type_to_location_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="cityiq.util.grouper">
+<code class="sig-prename descclassname">cityiq.util.</code><code class="sig-name descname">grouper</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">n</span></em>, <em class="sig-param"><span class="n">iterable</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/util.html#grouper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.util.grouper" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="cityiq.util.json_serial">
+<code class="sig-prename descclassname">cityiq.util.</code><code class="sig-name descname">json_serial</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">obj</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/util.html#json_serial"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.util.json_serial" title="Permalink to this definition">¶</a></dt>
+<dd><p>JSON serializer for objects not serializable by default json code</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="cityiq.util.local_to_timestamp">
+<code class="sig-prename descclassname">cityiq.util.</code><code class="sig-name descname">local_to_timestamp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dt</span></em>, <em class="sig-param"><span class="n">tz</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/util.html#local_to_timestamp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.util.local_to_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a local time, assumed in timezone tz, into a milisecond UTC timestamp</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="cityiq.util.log_message">
+<code class="sig-prename descclassname">cityiq.util.</code><code class="sig-name descname">log_message</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">r</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/util.html#log_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.util.log_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Debugging log message for requests</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="cityiq.util.make_csv_file_name">
+<code class="sig-prename descclassname">cityiq.util.</code><code class="sig-name descname">make_csv_file_name</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cache</span></em>, <em class="sig-param"><span class="n">locationUid</span></em>, <em class="sig-param"><span class="n">event_type</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/util.html#make_csv_file_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.util.make_csv_file_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="cityiq.util.run_async">
+<code class="sig-prename descclassname">cityiq.util.</code><code class="sig-name descname">run_async</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">items</span></em>, <em class="sig-param"><span class="n">workers</span><span class="o">=</span><span class="default_value">4</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/util.html#run_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.util.run_async" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run a function in multiple threads</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="cityiq.util.timestamp_to_local">
+<code class="sig-prename descclassname">cityiq.util.</code><code class="sig-name descname">timestamp_to_local</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ts</span></em>, <em class="sig-param"><span class="n">tz</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/util.html#timestamp_to_local"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.util.timestamp_to_local" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a UTC timestamp in milliseconds to a local time, in the timezone tz,  with no timezone</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-cityiq">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-cityiq" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">cityiq</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../config.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">Using the CLI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">Using the API</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">Module Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">cityiq</a><ul>
+      <li>Previous: <a href="modules.html" title="previous chapter">cityiq</a></li>
+      <li>Next: <a href="cityiq.cli.html" title="next chapter">cityiq.cli package</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Eric Busboom.
+
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.0.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+
+      |
+      <a href="../_sources/api/cityiq.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+
+
+
+  </body>
+</html>

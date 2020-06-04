@@ -1,0 +1,178 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>CityIQ API &#8212; cityiq 0.1.5 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Configuration" href="config.html" />
+
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+
+
+          <div class="body" role="main">
+
+  <div class="section" id="cityiq-api">
+<h1>CityIQ API<a class="headerlink" href="#cityiq-api" title="Permalink to this headline">¶</a></h1>
+<p>This module and command line tool provides access to the CityIQ API, with
+particular focus on getting metadata and parking events. The interface includes
+a basic access object for getting metadata and events, a scraper object for
+mass downloading events, and a command line tool for downloading and processing
+events.</p>
+<div class="section" id="quickstart">
+<h2>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h2>
+<p>Install the module with pip:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install cityiq
+</pre></div>
+</div>
+<p>Then generate a configuration file with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ciq_config  -w
+</pre></div>
+</div>
+<p>Edit the file with your credentials and other information for your system. The
+default file is configured for the San Diego system, but you may have to <a class="reference external" href="https://www.sandiego.gov/sustainability/energy-and-water-efficiency/programs-projects/smart-city">update
+the client id and password</a>.</p>
+<p>You can list the nodes, assets and locations in the system with the <strong class="program">ciq_nodes</strong>
+program:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ciq_nodes --locations <span class="c1"># display locations a JSON lines</span>
+ciq_nodes --cameras <span class="c1"># display camera assets as JSON lines</span>
+<span class="c1"># etc</span>
+</pre></div>
+</div>
+<p>You can also dump all assets or all locations to CSV files.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ciq_nodes -A assets.csv
+ciq_nodes -L locations.csv
+</pre></div>
+</div>
+<p>Getting events is a two step process, and can be done with either the CLI programs
+or the Python API. To get events with the CLI, fors download them to the cache.
+The cache location is defined in the configuration file, and should have at least
+100GB of free space.</p>
+<p>First, download and cache the events. The download will run for all of the
+assets that have the given event, over the whole time range. On the San Diego system,
+time ranges longer than a few months can take days to download.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ciq_events -e BICYCLE -s <span class="m">2020</span>-01-01 -f <span class="m">2020</span>-02-01
+</pre></div>
+</div>
+<p>The downloaded data is stored in the cache as CSV files, which you can load directly
+in which pandas or dask, or convert to one CSV file per asset:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ciq_events -e BICYCLE -s <span class="m">2020</span>-01-01 -f <span class="m">2020</span>-02-01
+</pre></div>
+</div>
+<p>You can combine them into a single file with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cat  <span class="k">$(</span>ls -1 <span class="p">|</span> head -1<span class="k">)</span> <span class="p">|</span> head -n1 &gt; combined.csv
+<span class="k">for</span> f in *.csv<span class="p">;</span> <span class="k">do</span> cat <span class="s2">&quot;`pwd`/</span><span class="nv">$f</span><span class="s2">&quot;</span> <span class="p">|</span> tail -n +2 &gt;&gt; combined.csv<span class="p">;</span> <span class="k">done</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="contents">
+<h2>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="config.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Using the CLI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Using the API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/modules.html">Module Reference</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">cityiq</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="config.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Using the CLI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Using the API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/modules.html">Module Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="config.html" title="next chapter">Configuration</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Eric Busboom.
+
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.0.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+
+
+
+  </body>
+</html>

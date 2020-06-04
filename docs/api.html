@@ -1,0 +1,155 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Using the API &#8212; cityiq 0.1.5 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="cityiq" href="api/modules.html" />
+    <link rel="prev" title="Using the CLI" href="cli.html" />
+
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+
+
+          <div class="body" role="main">
+
+  <div class="section" id="using-the-api">
+<h1>Using the API<a class="headerlink" href="#using-the-api" title="Permalink to this headline">¶</a></h1>
+<p>API objects are the primary way to get access to assets and events. <code class="xref py py-class docutils literal notranslate"><span class="pre">CityIq</span></code> is the top level access
+object. The API offers access to Locations, Events and Events.</p>
+<p>Typically, you will construct <code class="xref py py-class docutils literal notranslate"><span class="pre">CityIq</span></code> from a <code class="xref py py-class docutils literal notranslate"><span class="pre">Config</span></code>. If a configuration is not specific,
+the system will look for the file in default locations. You can also override individual configuration parameters
+with keyword arguments to the constructor.</p>
+<div class="section" id="metadata-access">
+<h2>Metadata Access<a class="headerlink" href="#metadata-access" title="Permalink to this headline">¶</a></h2>
+<p>Metadata, for both locations and assets, can be fetched with property accessors. The bounding box for the queries can
+be set in the configuration, or on the  <code class="xref py py-class docutils literal notranslate"><span class="pre">CityIq</span></code> constructor.</p>
+<p>The asset metadata properties are:</p>
+<ul class="simple">
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">CityIq.assets</span></code> : All assets</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">CityIq.nodes</span></code> : Nodes, the parents for other assets on a pole</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">CityIq.cameras</span></code> : All assets</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">CityIq.em_sensors</span></code> : ?</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">CityIq.env_sensors</span></code> : Environmental sensors</p></li>
+</ul>
+<p>The location metadata properties are:</p>
+<ul class="simple">
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">CityIq.locations</span></code> : All locations</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">CityIq.walkways</span></code> :</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">CityIq.parking_zones</span></code> :</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">CityIq.traffic_lane</span></code> :</p></li>
+</ul>
+<p>Events can be fetched with <code class="xref py py-func docutils literal notranslate"><span class="pre">cityiq.api.CityIq.events()</span></code></p>
+<p>Each of these acessor properties or functions returns a generator that generates objects of a specific type,
+one base class for each of Locations, Assets or Events:</p>
+<ul class="simple">
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Asset</span></code></p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Location</span></code></p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Event</span></code></p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">bbox</span> <span class="o">=</span> <span class="s1">&#39;32.718987:-117.174244,32.707356:-117.154850&#39;</span>
+
+<span class="n">c</span> <span class="o">=</span> <span class="n">CityIq</span><span class="p">(</span><span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">)</span> <span class="c1"># Use default config, override bbox</span>
+
+<span class="c1"># Get Locations</span>
+<span class="n">locations</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">locations</span><span class="p">)</span>
+
+<span class="c1"># Get the assets at this location:</span>
+<span class="k">for</span> <span class="n">location</span> <span class="ow">in</span> <span class="n">locations</span><span class="p">:</span>
+    <span class="n">do_something_with</span><span class="p">(</span><span class="n">location</span><span class="o">.</span><span class="n">assets</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">cityiq</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="config.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Using the CLI</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Using the API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/modules.html">Module Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="cli.html" title="previous chapter">Using the CLI</a></li>
+      <li>Next: <a href="api/modules.html" title="next chapter">cityiq</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Eric Busboom.
+
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.0.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+
+      |
+      <a href="_sources/api.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+
+
+
+  </body>
+</html>
