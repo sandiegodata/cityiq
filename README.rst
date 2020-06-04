@@ -68,8 +68,8 @@ Detailed Examples and Documentation
 
 See more examples for using the CLI progras and API:
 
-    * [In this Jupyter notebook](https://github.com/sandiegodata/cityiq/blob/master/notebooks/Basic%20Use.ipynb)
-    * [In the documentation](https://sandiegodata.github.io/cityiq/)
+* `In this Jupyter notebook <https://github.com/sandiegodata/cityiq/blob/master/notebooks/Basic%20Use.ipynb>`_
+* `In the documentation <https://sandiegodata.github.io/cityiq/>`_
 
 
 Devlopment
