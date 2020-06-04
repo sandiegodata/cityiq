@@ -10,8 +10,9 @@ from cityiq.api import CityIq, CacheFile
 from cityiq.config import Config
 from cityiq.util import event_type_to_location_type
 from cityiq.api import CityIq, logger as api_logger
-from cityiq.task import FetchTask, logger as task_logger
+from cityiq.task import logger as task_logger
 from .support import CityIQTest
+from cityiq.task import generate_days
 
 logging.basicConfig()
 
@@ -86,19 +87,33 @@ class TestBasic(CityIQTest):
 
         self.assertEqual(0.13, round(a, 2))
 
-    def test_bicycle_events(self):
+
+
+
+
+    def test_event_overlaps(self):
+
+        from cityiq.task import request_ranges
+
+        from dateutil.relativedelta import relativedelta
+
+        d1 = relativedelta(days=1)
 
         c = CityIq(self.config)
 
-        i = 0
+        extant = list(generate_days(c.convert_time('2020-01-01'), c.convert_time('2020-01-05'))) + \
+                list(generate_days(c.convert_time('2020-01-10'), c.convert_time('2020-01-15'))) + \
+                list(generate_days(c.convert_time('2020-01-20'), c.convert_time('2020-01-25')))
 
-        for a in c.get_assets():
-            if a.eventTypes and 'BICYCLE' in a.eventTypes:
-                print(i, a.uid, len(a.get_events('BICYCLE', '2020-4-1', '2020-4-2')))
-                i += 1
+        extant = [ e[0] for e in extant]
 
-            if i > 5:
-                break
+        rr = request_ranges(c.convert_time('2020-01-01'), c.convert_time('2020-02-01'), extant)
+
+        dts = sorted(c.convert_time(e[0]).date().isoformat() for e in rr)
+        dte = sorted(c.convert_time(e[1]).date().isoformat() for e in rr)
+
+        self.assertEqual(dts, ['2020-01-05', '2020-01-15', '2020-01-25'])
+        self.assertEqual(dte, ['2020-01-10', '2020-01-20', '2020-02-01'])
 
     def test_cache_file(self):
 
@@ -108,7 +123,7 @@ class TestBasic(CityIQTest):
 
         l = c.get_location('09a66ff9a2c0cb63106fe0054412c2af')
 
-        cf = CacheFile(self.config.cache_objects, l, event_type='PKIN', dt=dt)
+        cf = CacheFile(self.config.cache_objects, l, event_type='PKIN', dt=dt, format='csv')
 
         print(cf.path)
 
@@ -124,7 +139,7 @@ class TestBasic(CityIQTest):
         # From the location
         cf = l.cache_file(event_type='PKIN', dt=dt)
 
-        self.assertTrue(cf.exists())
+        self.assertTrue(cf.exists(), cf.path)
         self.assertEqual(cf.read()[0], 'foo!')
 
         cf.delete()
@@ -134,6 +149,9 @@ class TestBasic(CityIQTest):
 
         self.assertTrue(cf.exists())
         self.assertEqual(cf.read()[0], 'foo!')
+
+
+
 
     def test_consec_days_raw(self):
         """Test that two requests for consecutive days returns the
@@ -175,36 +193,7 @@ class TestBasic(CityIQTest):
 
         self.assertEquals(l1, l2 + l3)
 
-    def test_location_events_day(self):
-        # api_logger.setLevel(logging.DEBUG)
 
-        location_uids = ['09a66ff9a2c0cb63106fe0054412c2af', '0d152fbd26c5baad229556c01d3eb43b', '0d1vvenvsrp7jgi27jvx']
-
-        c = CityIq(self.config)
-
-        locations = [c.get_location(uid) for uid in location_uids]
-
-        # By individual days:
-
-        events = []
-
-        for day in ['2019-01-01', '2019-01-02']:
-            for i, l in enumerate(locations):
-                events += l.get_events_day('PKIN', day)
-
-        n_events_indv = len(events)
-
-        self.assertGreater(n_events_indv, 600)
-
-        # One multi-day request
-        events = []
-        for i, l in enumerate(locations):
-            events += l.get_events('PKIN', '2019-01-01', '2019-01-03')
-
-        n_events_mult = len(events)
-        self.assertGreater(n_events_mult, 600)
-
-        self.assertEqual(n_events_indv, n_events_mult)
 
     def test_nodes(self):
 
@@ -228,8 +217,7 @@ class TestBasic(CityIQTest):
         for l in c.locations[60:70]:
             print(l.data.keys())
             d = l.detail
-            print(d.properties)
-            print(d.address)
+            print(d)
 
 
     def test_has_event(self):
@@ -264,48 +252,7 @@ class TestBasic(CityIQTest):
         for a in c.assets_by_event('PEDEVT'):
             print(a)
 
-    def test_list_location_by_event(self):
 
-        c = CityIq(self.config)
-
-        for a in c.assets_by_event('BICYCLE'):
-            e = a.get_events('BICYCLE','2020-01-01', '2020-02-01')
-            print(e)
-
-
-
-
-    def test_async_locations(self):
-        from tqdm import tqdm
-        from cityiq.util import run_async
-
-        c = CityIq(self.config)
-
-        assets = list(c.mics)
-
-        def _f(asset):
-            return len(list(asset.locations))
-
-        def tqdm(x, **kwds):
-            return x
-
-        for asset, result in tqdm(run_async(assets, _f, workers=5), total=len(assets)):
-            print(result, asset)
-
-
-    def test_async_events(self):
-        from tqdm import tqdm
-        from cityiq.util import run_async
-
-        c = CityIq(self.config)
-
-        assets = list(c.assets_by_event('BICYCLE'))
-
-        def _f(asset):
-            return len(list(asset.locations))
-
-        for asset, result in tqdm(run_async(assets, _f, workers=5), total=len(assets)):
-            print(result, asset)
 
     def test_dont_cache_today(self):
         from dateutil.relativedelta import relativedelta

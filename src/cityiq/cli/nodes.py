@@ -12,6 +12,13 @@ from cityiq import __version__
 import csv
 import tqdm
 
+import pandas as pd
+
+try:
+    from pandas import json_normalize
+except ImportError:
+    from pandas.io.json import json_normalize
+
 __author__ = "Eric Busboom"
 __copyright__ = "Eric Busboom"
 __license__ = "mit"
@@ -90,8 +97,6 @@ def main(args):
     if not config.client_id:
         print("ERROR: Did not get valid config file. Use --config option or CITYIQ_CONFIG env var")
 
-    print("Using config:", config._config_file)
-
     c = CityIq(config, cache_metadata= not args.no_cache)
 
     try:
@@ -106,9 +111,11 @@ def main(args):
                         w.writerow([a.assetUid, a.parentAssetUid, a.assetType, l.locationUid, l.parentLocationUid, l.locationType])
                         p.update(1)
         elif args.assets_csv:
-            c.asset_dataframe.to_csv(args.assets_csv)
+            df = json_normalize(a.data for a in c.assets)
+            df.to_csv(args.assets_csv)
         elif args.locations_csv:
-            c.locations_dataframe.to_csv(args.locations_csv)
+            df = json_normalize(a.data for a in c.locations)
+            df.to_csv(args.locations_csv)
         else:
             for a in acessors:
                 if getattr(args, a) == True:

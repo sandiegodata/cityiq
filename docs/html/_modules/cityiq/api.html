@@ -4,7 +4,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>cityiq.api &#8212; cityiq 0.0.13.post0.dev2+gd82a06d.dirty documentation</title>
+    <title>cityiq.api &#8212; cityiq 0.1.1.post0.dev1+g5ce21ea.dirty documentation</title>
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
@@ -36,57 +36,6 @@
 <span class="c1"># MIT License, included in this distribution as LICENSE</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="sd">API objects are the primary way to get access to assets and events. :py:class:`CityIq` is the top level access</span>
-<span class="sd">object. The API offers access to Locations, Events and Events.</span>
-
-<span class="sd">Typically, you will construct :py:class:`CityIq` from a :py:class:`Config`. If a configuration is not specific,</span>
-<span class="sd">the system will look for the file in default locations. You can also override individual configuration parameters</span>
-<span class="sd">with keyword arguments to the constructor.</span>
-
-<span class="sd">Metadata Access</span>
-<span class="sd">---------------</span>
-
-<span class="sd">Metadata, for both locations and assets, can be fetched with property accessors. The bounding box for the queries can</span>
-<span class="sd">be set in the configuration, or on the  :py:class:`CityIq` constructor.</span>
-
-<span class="sd">The asset metadata properties are:</span>
-
-<span class="sd">- :py:attr:`CityIq.assets` : All assets</span>
-<span class="sd">- :py:attr:`CityIq.nodes` : Nodes, the parents for other assets on a pole</span>
-<span class="sd">- :py:attr:`CityIq.cameras` : All assets</span>
-<span class="sd">- :py:attr:`CityIq.em_sensors` : ?</span>
-<span class="sd">- :py:attr:`CityIq.env_sensors` : Environmental sensors</span>
-
-<span class="sd">The location metadata properties are:</span>
-
-<span class="sd">- :py:attr:`CityIq.locations` : All locations</span>
-<span class="sd">- :py:attr:`CityIq.walkways` :</span>
-<span class="sd">- :py:attr:`CityIq.parking_zones` :</span>
-<span class="sd">- :py:attr:`CityIq.traffic_lane` :</span>
-
-<span class="sd">Events can be fetched with :py:func:`cityiq.api.CityIq.events`</span>
-
-<span class="sd">Each of these acessor properties or functions returns a generator that generates objects of a specific type,</span>
-<span class="sd">one base class for each of Locations, Assets or Events:</span>
-
-<span class="sd">- :py:class:`Asset`</span>
-<span class="sd">- :py:class:`Location`</span>
-<span class="sd">- :py:class:`Event`</span>
-
-<span class="sd">.. code-block:: python</span>
-
-<span class="sd">    bbox = &#39;32.718987:-117.174244,32.707356:-117.154850&#39;</span>
-
-<span class="sd">    c = CityIq(bbox=bbox) # Use default config, override bbox</span>
-
-<span class="sd">    # Get Locations</span>
-<span class="sd">    locations = list(c.locations)</span>
-
-<span class="sd">    # Get the assets at this location:</span>
-<span class="sd">    for location in locations:</span>
-<span class="sd">        do_something_with(location.assets</span>
-
-
 
 <span class="sd">&quot;&quot;&quot;</span>
 
@@ -101,14 +50,14 @@
 <span class="kn">import</span> <span class="nn">pytz</span>
 <span class="kn">import</span> <span class="nn">requests</span>
 <span class="kn">from</span> <span class="nn">cityiq.util</span> <span class="k">import</span> <span class="n">event_to_zone</span>
-<span class="kn">from</span> <span class="nn">cityiq.util</span> <span class="k">import</span> <span class="n">run_async</span>
 <span class="kn">from</span> <span class="nn">dateutil.parser</span> <span class="k">import</span> <span class="n">parse</span>
+<span class="kn">from</span> <span class="nn">requests</span> <span class="k">import</span> <span class="n">HTTPError</span>
 <span class="kn">from</span> <span class="nn">slugify</span> <span class="k">import</span> <span class="n">slugify</span>
-<span class="kn">from</span> <span class="nn">tqdm</span> <span class="k">import</span> <span class="n">tqdm</span>
 
 <span class="kn">from</span> <span class="nn">.config</span> <span class="k">import</span> <span class="n">Config</span>
 <span class="kn">from</span> <span class="nn">.exceptions</span> <span class="k">import</span> <span class="n">ConfigurationError</span><span class="p">,</span> <span class="n">TimeError</span><span class="p">,</span> <span class="n">CityIqError</span>
-<span class="kn">from</span> <span class="nn">.util</span> <span class="k">import</span> <span class="n">json_serial</span><span class="p">,</span> <span class="n">log_message</span>
+<span class="kn">from</span> <span class="nn">.util</span> <span class="k">import</span> <span class="n">json_serial</span>
+
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -154,66 +103,43 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">Polygon</span><span class="p">(</span><span class="n">vertices</span><span class="p">)</span>
 
-<div class="viewcode-block" id="CityIqObject.get_fetch_task"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CityIqObject.get_fetch_task">[docs]</a>    <span class="k">def</span> <span class="nf">get_fetch_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">):</span>
-        <span class="kn">from</span> <span class="nn">dateutil.relativedelta</span> <span class="k">import</span> <span class="n">relativedelta</span>
-        <span class="kn">from</span> <span class="nn">.task</span> <span class="k">import</span> <span class="n">FetchTask</span>
-
-        <span class="n">d1</span> <span class="o">=</span> <span class="n">relativedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-
-        <span class="n">today</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">tz</span><span class="o">.</span><span class="n">localize</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
-
-        <span class="k">return</span> <span class="n">FetchTask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">)</span></div>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">events_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Return the URL for fetching events, called from get_events() in the base class. &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">event_url</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">events_url_suffix</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">uid</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">uid</span><span class="p">)</span>
 
-<div class="viewcode-block" id="CityIqObject.cache_file"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CityIqObject.cache_file">[docs]</a>    <span class="k">def</span> <span class="nf">cache_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fetch_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">event_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="CityIqObject.cache_file"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CityIqObject.cache_file">[docs]</a>    <span class="k">def</span> <span class="nf">cache_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fetch_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">event_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;csv&#39;</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">CacheFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cache_objects</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">fetch_func</span><span class="o">=</span><span class="n">fetch_func</span><span class="p">,</span>
-                         <span class="n">event_type</span><span class="o">=</span><span class="n">event_type</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="n">group</span><span class="p">)</span></div>
+                         <span class="n">event_type</span><span class="o">=</span><span class="n">event_type</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="n">group</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="nb">format</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="CityIqObject.write"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CityIqObject.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Write data to the cache&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cache_file</span><span class="p">()</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="CityIqObject.get_events"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CityIqObject.get_events">[docs]</a>    <span class="k">def</span> <span class="nf">get_events</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="n">start_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">convert_time</span><span class="p">(</span><span class="n">start_time</span><span class="p">)</span>
-        <span class="n">end_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">convert_time</span><span class="p">(</span><span class="n">end_time</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">_events</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">events_url</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get_events</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">event_type</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="CityIqObject.get_day_cache_file"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CityIqObject.get_day_cache_file">[docs]</a>    <span class="k">def</span> <span class="nf">get_day_cache_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
-        <span class="kn">from</span> <span class="nn">dateutil.relativedelta</span> <span class="k">import</span> <span class="n">relativedelta</span>
-
-        <span class="n">dt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">convert_time</span><span class="p">(</span><span class="n">dt</span><span class="p">)</span>
-
-        <span class="n">d1</span> <span class="o">=</span> <span class="n">relativedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-
-        <span class="n">start_time</span> <span class="o">=</span> <span class="n">dt</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">hour</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">second</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">microsecond</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">end_time</span> <span class="o">=</span> <span class="n">start_time</span> <span class="o">+</span> <span class="n">d1</span>
-
-        <span class="k">def</span> <span class="nf">ff</span><span class="p">():</span>
-            <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">_events</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">events_url</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">r</span>
-
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache_file</span><span class="p">(</span><span class="n">ff</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="CityIqObject.get_events_day"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CityIqObject.get_events_day">[docs]</a>    <span class="k">def</span> <span class="nf">get_events_day</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get events for a single day, from the start of the day of the given date to the next day, exclusive&quot;&quot;&quot;</span>
-
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_day_cache_file</span><span class="p">(</span><span class="n">event_type</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span></div>
 
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">&quot;&lt;</span><span class="si">{}</span><span class="s2">: </span><span class="si">{}</span><span class="s2">&gt;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="to_date"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.to_date">[docs]</a><span class="k">def</span> <span class="nf">to_date</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">t</span></div>
 
 <div class="viewcode-block" id="CacheFile"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CacheFile">[docs]</a><span class="k">class</span> <span class="nc">CacheFile</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Represents a cached file of records for one location or asset, one type of event,</span>
 <span class="sd">    and one day. Or, if the date and event type are omitted, just the information</span>
 <span class="sd">    about an asset or location&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cache_path</span><span class="p">,</span> <span class="n">access_object</span><span class="p">,</span> <span class="n">fetch_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">event_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cache_path</span><span class="p">,</span> <span class="n">access_object</span><span class="p">,</span> <span class="n">fetch_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">event_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">end_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;json&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">        :param cache_path: Path to the base object cache</span>
@@ -234,13 +160,15 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_access_object</span> <span class="o">=</span> <span class="n">access_object</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_event_type</span> <span class="o">=</span> <span class="n">event_type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_group</span> <span class="o">=</span> <span class="n">group</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_dt</span> <span class="o">=</span> <span class="n">dt</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dt</span> <span class="o">=</span> <span class="n">to_date</span><span class="p">(</span><span class="n">dt</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_end_time</span> <span class="o">=</span> <span class="n">to_date</span><span class="p">(</span><span class="n">end_time</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_format</span> <span class="o">=</span> <span class="nb">format</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">path</span>  <span class="c1"># Just check that it&#39;s ok</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">today</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_access_object</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">convert_time</span><span class="p">(</span><span class="s1">&#39;now&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">hour</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">second</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">microsecond</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">today</span> <span class="o">=</span> <span class="n">to_date</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_access_object</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">convert_time</span><span class="p">(</span><span class="s1">&#39;now&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">hour</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">second</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">microsecond</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_write</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dt</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">today</span>  <span class="c1"># Don&#39;t write cache for today.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_write</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dt</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_end_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dt</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">today</span>  <span class="c1"># Don&#39;t write cache for today on day cache files.</span>
 
 <div class="viewcode-block" id="CacheFile.run"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CacheFile.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 
@@ -252,6 +180,16 @@
             <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_func</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">v</span></div>
+
+
+<div class="viewcode-block" id="CacheFile.object_prefix"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CacheFile.object_prefix">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">object_prefix</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">event_type</span><span class="p">):</span>
+
+        <span class="n">uid</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">uid</span>
+        <span class="n">prefix</span> <span class="o">=</span> <span class="n">uid</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="n">uid</span> <span class="k">else</span> <span class="s1">&#39;none&#39;</span>
+
+
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{obj.object_sub_dir}</span><span class="s1">/</span><span class="si">{prefix}</span><span class="s1">/</span><span class="si">{uid}</span><span class="s1">/</span><span class="si">{event_type}</span><span class="s1">/&#39;</span></div>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -266,15 +204,14 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_event_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_group</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache_path</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span>
-                <span class="n">Path</span><span class="p">(</span>
-                    <span class="n">f</span><span class="s1">&#39;</span><span class="si">{object_sub_dir}</span><span class="s1">/</span><span class="si">{prefix}</span><span class="s1">/</span><span class="si">{uid}</span><span class="s1">/</span><span class="si">{self._event_type}</span><span class="s1">/</span><span class="si">{self._dt.year}</span><span class="s1">-</span><span class="si">{self._dt.month:02}</span><span class="s1">/&#39;</span>
-                    <span class="o">+</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{uid}</span><span class="s1">-{self._dt.date().isoformat()}-</span><span class="si">{self._event_type}</span><span class="s1">.json&#39;</span><span class="p">))</span>
+                <span class="n">Path</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_prefix</span><span class="p">(</span><span class="n">ao</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_event_type</span><span class="p">)</span> <span class="o">+</span>
+                    <span class="n">f</span><span class="s1">&#39;{self._dt.isoformat()}.</span><span class="si">{self._format}</span><span class="s1">&#39;</span><span class="p">))</span>
 
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dt</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_event_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 
             <span class="n">file_name</span> <span class="o">=</span> <span class="s1">&#39;object&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_group</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_group</span>
 
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache_path</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;</span><span class="si">{object_sub_dir}</span><span class="s1">/</span><span class="si">{prefix}</span><span class="s1">/</span><span class="si">{uid}</span><span class="s1">/</span><span class="si">{file_name}</span><span class="s1">.json&#39;</span><span class="p">))</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache_path</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;</span><span class="si">{object_sub_dir}</span><span class="s1">/</span><span class="si">{prefix}</span><span class="s1">/</span><span class="si">{uid}</span><span class="s1">/</span><span class="si">{file_name}</span><span class="s1">.</span><span class="si">{self._format}</span><span class="s1">&#39;</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">CityIqError</span><span class="p">(</span><span class="s2">&quot;Bad combination of event_type and dt: either both are None or both not None,&quot;</span>
                               <span class="s2">&quot;and group can&#39;t be used with them. &quot;</span>
@@ -295,6 +232,8 @@
             <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="CacheFile.write"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CacheFile.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Write Json data, or a CSV if the result valule is a dataframe&quot;&quot;&quot;</span>
+        <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Won&#39;t write for today </span><span class="si">{}</span><span class="s2"> or later </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">today</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)))</span>
@@ -308,8 +247,14 @@
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
             <span class="k">raise</span>  <span class="c1"># The token is not a Path</span>
 
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">json_serial</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format</span> <span class="o">==</span> <span class="s1">&#39;json&#39;</span><span class="p">:</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">to_json</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">orient</span><span class="o">=</span><span class="s1">&#39;table&#39;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format</span> <span class="o">==</span> <span class="s1">&#39;csv&#39;</span><span class="p">:</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">json_serial</span><span class="p">)</span>
 
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;wrote </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)))</span></div></div>
 
@@ -328,7 +273,7 @@
     <span class="n">asset_url_suffix</span> <span class="o">=</span> <span class="s1">&#39;/api/v2/metadata/assets/</span><span class="si">{uid}</span><span class="s1">&#39;</span>
     <span class="n">location_url_suffix</span> <span class="o">=</span> <span class="s1">&#39;/api/v2/metadata/locations/</span><span class="si">{uid}</span><span class="s1">&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cache_metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">cache_events</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cache_metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">CityIq</span>
         <span class="k">if</span> <span class="n">config</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
@@ -340,7 +285,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">tz</span> <span class="o">=</span> <span class="n">pytz</span><span class="o">.</span><span class="n">timezone</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">timezone</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">cache_metadata</span> <span class="o">=</span> <span class="n">cache_metadata</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cache_events</span> <span class="o">=</span> <span class="n">cache_events</span>
+
 
         <span class="bp">self</span><span class="o">.</span><span class="n">metadata_cache</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cache_meta</span><span class="p">)</span>
 
@@ -394,6 +339,7 @@
         <span class="sd">&quot;&quot;&quot;Convert a variety of time formats into the millisecond format</span>
 <span class="sd">        used by the CityIQ interface. Converts naieve times to the configured timezone&quot;&quot;&quot;</span>
 
+
         <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
 
         <span class="k">def</span> <span class="nf">is_micros</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
@@ -426,6 +372,9 @@
 
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tz</span><span class="o">.</span><span class="n">localize</span><span class="p">(</span><span class="n">dt</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="c1"># Probably a date.</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">convert_time</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">combine</span><span class="p">(</span><span class="n">dt</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">min</span><span class="o">.</span><span class="n">time</span><span class="p">()))</span>
         <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
             <span class="c1"># Already localized:</span>
             <span class="k">return</span> <span class="n">dt</span></div>
@@ -466,43 +415,68 @@
 
         <span class="k">return</span> <span class="n">url</span></div>
 
-    <span class="k">def</span> <span class="nf">_http_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">zone</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-
-        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_url</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
-
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
-
-        <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span><span class="p">(</span><span class="n">zone</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">r</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-
-            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">log_message</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="o">+</span> <span class="n">r</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
-            <span class="k">raise</span>
-
-        <span class="k">return</span> <span class="n">r</span>
-
 <div class="viewcode-block" id="CityIq.http_get"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CityIq.http_get">[docs]</a>    <span class="k">def</span> <span class="nf">http_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">zone</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_http_get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">zone</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the events of one type</span>
+<span class="sd">        :param start_time:</span>
+<span class="sd">        :param span:  time span in seconds</span>
+<span class="sd">        :param event_type:</span>
+<span class="sd">        :param tz_name:</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># logger.debug(f&quot;Run fetch task {str(self)}&quot;)</span>
 
-    <span class="k">def</span> <span class="nf">_get_page</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">page</span><span class="p">,</span> <span class="n">zone</span><span class="p">,</span> <span class="n">bbox</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">time</span> <span class="k">import</span> <span class="n">sleep</span>
 
-        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s1">&#39;page&#39;</span><span class="p">:</span> <span class="n">page</span><span class="p">,</span>
-            <span class="s1">&#39;size&#39;</span><span class="p">:</span> <span class="mi">2000</span><span class="p">,</span>
-            <span class="s1">&#39;bbox&#39;</span><span class="p">:</span> <span class="n">bbox</span><span class="p">,</span>
-        <span class="p">}</span>
+        <span class="n">delay</span> <span class="o">=</span> <span class="mi">5</span>
+        <span class="n">last_exception</span> <span class="o">=</span> <span class="kc">None</span>
 
-        <span class="k">if</span> <span class="n">query</span><span class="p">:</span>
-            <span class="n">params</span><span class="p">[</span><span class="s1">&#39;q&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">query</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>  <span class="c1"># 5 retries on errors</span>
 
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;CityIq: get_page url=</span><span class="si">{}</span><span class="s2"> page=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">page</span><span class="p">)))</span>
-        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">http_get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">zone</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_url</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
 
-<div class="viewcode-block" id="CityIq.get_pages"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CityIq.get_pages">[docs]</a>    <span class="k">def</span> <span class="nf">get_pages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">zone</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+                <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span><span class="p">(</span><span class="n">zone</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+                <span class="n">r</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+
+                <span class="k">return</span> <span class="n">r</span>
+
+            <span class="k">except</span> <span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> Failed. Retry in  </span><span class="si">{}</span><span class="s1"> seconds: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">delay</span><span class="p">,</span> <span class="n">e</span><span class="p">))</span>
+                <span class="n">err</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s1">&#39;request_url&#39;</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">url</span><span class="p">,</span>
+                    <span class="s1">&#39;request_headers&#39;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="p">),</span>
+                    <span class="s1">&#39;response_headers&#39;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">),</span>
+                    <span class="s1">&#39;response_body&#39;</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">text</span>
+                <span class="p">}</span>
+
+                <span class="n">fn</span> <span class="o">=</span> <span class="n">slugify</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+
+                <span class="n">p</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cache_errors</span><span class="p">)</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                    <span class="n">p</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+                <span class="k">with</span> <span class="n">p</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">err</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">json_serial</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+                <span class="n">delay</span> <span class="o">*=</span> <span class="mi">2</span>  <span class="c1"># Delay backoff</span>
+                <span class="n">delay</span> <span class="o">=</span> <span class="n">delay</span> <span class="k">if</span> <span class="n">delay</span> <span class="o">&lt;=</span> <span class="mi">60</span> <span class="k">else</span> <span class="mi">60</span>
+                <span class="n">sleep</span><span class="p">(</span><span class="n">delay</span><span class="p">)</span>
+                <span class="n">last_exception</span> <span class="o">=</span> <span class="n">e</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Error &#39;{type(e)}: </span><span class="si">{e}</span><span class="s2">&#39; for </span><span class="si">{self.access_object}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">last_exception</span> <span class="o">=</span> <span class="n">e</span>
+
+        <span class="k">if</span> <span class="n">last_exception</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;</span><span class="si">{last_exception}</span><span class="s2"> Giving up.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">last_exception</span></div>
+
+<div class="viewcode-block" id="CityIq.get_meta_pages"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CityIq.get_meta_pages">[docs]</a>    <span class="k">def</span> <span class="nf">get_meta_pages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">zone</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 
         <span class="n">zone</span> <span class="o">=</span> <span class="n">zone</span> <span class="k">if</span> <span class="n">zone</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">zone</span>
 
@@ -517,11 +491,26 @@
         <span class="n">page</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-            <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_page</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">page</span><span class="p">,</span> <span class="n">zone</span><span class="p">,</span> <span class="n">bbox</span><span class="p">,</span> <span class="n">query</span><span class="p">)</span>
 
-            <span class="n">content</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;content&#39;</span><span class="p">]</span>
+            <span class="n">page_params</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;page&#39;</span><span class="p">:</span> <span class="n">page</span><span class="p">,</span>
+                <span class="s1">&#39;size&#39;</span><span class="p">:</span> <span class="mi">20000</span><span class="p">,</span>
+                <span class="s1">&#39;bbox&#39;</span><span class="p">:</span> <span class="n">bbox</span><span class="p">,</span>
+            <span class="p">}</span>
 
-            <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">params</span><span class="p">:</span>
+                <span class="n">params</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">page_params</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">params</span> <span class="o">=</span> <span class="n">page_params</span>
+
+            <span class="k">if</span> <span class="n">query</span><span class="p">:</span>
+                <span class="n">params</span><span class="p">[</span><span class="s1">&#39;q&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">query</span><span class="p">)</span>
+
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;CityIq: get_page url=</span><span class="si">{}</span><span class="s2"> page=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">page</span><span class="p">)))</span>
+
+            <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">http_get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">zone</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+
+            <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;content&#39;</span><span class="p">]:</span>
                 <span class="n">e</span><span class="p">[</span><span class="s1">&#39;index&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">index</span>
                 <span class="n">e</span><span class="p">[</span><span class="s1">&#39;page&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">page</span>
                 <span class="n">e</span><span class="p">[</span><span class="s1">&#39;total&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;totalElements&#39;</span><span class="p">]</span>
@@ -541,14 +530,14 @@
         <span class="k">if</span> <span class="s1">&#39;eventTypes&#39;</span> <span class="ow">in</span> <span class="n">e</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">e</span><span class="p">[</span><span class="s1">&#39;eventTypes&#39;</span><span class="p">]:</span>
             <span class="n">e</span><span class="p">[</span><span class="s1">&#39;eventTypes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
-        <span class="k">return</span> <span class="n">dclass</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_events</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dclass</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_metadata</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_new_location</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
         <span class="kn">from</span> <span class="nn">cityiq.location</span> <span class="k">import</span> <span class="p">(</span><span class="n">Location</span><span class="p">)</span>
 
         <span class="n">dclass</span> <span class="o">=</span> <span class="n">Location</span><span class="o">.</span><span class="n">dclass_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="s1">&#39;locationType&#39;</span><span class="p">],</span> <span class="n">Location</span><span class="p">)</span>  <span class="c1"># probably fragile</span>
 
-        <span class="k">return</span> <span class="n">dclass</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_events</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dclass</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_metadata</span><span class="p">)</span>
 
 <div class="viewcode-block" id="CityIq.get_assets"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CityIq.get_assets">[docs]</a>    <span class="k">def</span> <span class="nf">get_assets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">zone</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 
@@ -568,8 +557,8 @@
 
         <span class="n">assets</span> <span class="o">=</span> <span class="p">[]</span>
 
-        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_pages</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">metadata_url</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">assets_search_suffix</span><span class="p">,</span>
-                                <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span> <span class="n">zone</span><span class="o">=</span><span class="n">zone</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_meta_pages</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">metadata_url</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">assets_search_suffix</span><span class="p">,</span>
+                                     <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span> <span class="n">zone</span><span class="o">=</span><span class="n">zone</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">):</span>
             <span class="n">assets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_new_asset</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">set_meta_cache</span><span class="p">(</span><span class="n">cache_key</span><span class="p">,</span> <span class="n">assets</span><span class="p">)</span>
@@ -590,13 +579,6 @@
         <span class="sd">&quot;&quot;&quot;Return all system assets&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_assets</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">asset_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return assets in row form in a pandas Dataframe&quot;&quot;&quot;</span>
-        <span class="kn">from</span> <span class="nn">cityiq.asset</span> <span class="k">import</span> <span class="n">Asset</span>
-        <span class="kn">from</span> <span class="nn">pandas</span> <span class="k">import</span> <span class="n">DataFrame</span>
-
-        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">([</span><span class="n">e</span><span class="o">.</span><span class="n">row</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">assets</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="n">Asset</span><span class="o">.</span><span class="n">row_header</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -646,8 +628,8 @@
 
         <span class="n">locations</span> <span class="o">=</span> <span class="p">[]</span>
 
-        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_pages</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">metadata_url</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">locations_search_suffix</span><span class="p">,</span>
-                                <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span> <span class="n">zone</span><span class="o">=</span><span class="n">zone</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_meta_pages</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">metadata_url</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">locations_search_suffix</span><span class="p">,</span>
+                                     <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span> <span class="n">zone</span><span class="o">=</span><span class="n">zone</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">):</span>
             <span class="n">locations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_new_location</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">set_meta_cache</span><span class="p">(</span><span class="n">cache_key</span><span class="p">,</span> <span class="n">locations</span><span class="p">)</span>
@@ -727,7 +709,7 @@
             <span class="s1">&#39;eventType&#39;</span><span class="p">:</span> <span class="n">event_type</span><span class="p">,</span>
             <span class="s1">&#39;startTime&#39;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">start_time</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">),</span>
             <span class="s1">&#39;endTime&#39;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">end_time</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">),</span>
-            <span class="s1">&#39;pageSize&#39;</span><span class="p">:</span> <span class="mi">20000</span>
+            <span class="s1">&#39;pageSize&#39;</span><span class="p">:</span> <span class="mi">20000</span>  <span class="c1"># param is different from metadata daata service, which uses &#39;size&#39;</span>
         <span class="p">}</span>
 
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Param range </span><span class="si">{start_time}</span><span class="s2"> to </span><span class="si">{end_time}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -737,13 +719,17 @@
 
         <span class="k">return</span> <span class="n">params</span>
 
-    <span class="k">def</span> <span class="nf">_events</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">_generate_events</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate events from a request. The routine will get up to pageSize</span>
+<span class="sd">        events with in a date range, then mke another request with a new date range if the last</span>
+<span class="sd">        event returned is not the last in the date range. &quot;&quot;&quot;</span>
 
         <span class="n">page</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">records</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Request events from </span><span class="si">{start_time}</span><span class="s2"> to </span><span class="si">{end_time}</span><span class="s2">&quot;</span><span class="p">)</span>
 
             <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_event_params</span><span class="p">(</span><span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">)</span>
 
@@ -755,8 +741,9 @@
                 <span class="nb">print</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
                 <span class="k">raise</span>
 
-            <span class="n">content</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;content&#39;</span><span class="p">]</span>
-            <span class="n">records</span> <span class="o">+=</span> <span class="n">content</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Got {len(d[&#39;content&#39;])}&quot;</span><span class="p">)</span>
+            <span class="k">yield from</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;content&#39;</span><span class="p">]</span>
+
             <span class="n">md</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;metaData&#39;</span><span class="p">]</span>
 
             <span class="k">if</span> <span class="n">md</span><span class="p">[</span><span class="s1">&#39;request_limit&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">md</span><span class="p">[</span><span class="s1">&#39;totalRecords&#39;</span><span class="p">]:</span>
@@ -764,20 +751,140 @@
                 <span class="n">start_time</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">md</span><span class="p">[</span><span class="s1">&#39;endTs&#39;</span><span class="p">])</span>
 
             <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span>
 
-                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Got {len(records)} events&quot;</span><span class="p">)</span>
-                <span class="k">return</span> <span class="n">records</span>
+    <span class="k">def</span> <span class="nf">_event_cache_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">):</span>
 
-<div class="viewcode-block" id="CityIq.make_tasks"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CityIq.make_tasks">[docs]</a>    <span class="k">def</span> <span class="nf">make_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fetch_tasks_class</span><span class="p">,</span> <span class="n">objects</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fetch, and cache, events requests for a set of assets or locations &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">cityiq.task</span> <span class="k">import</span> <span class="n">ensure_date</span>
+
+        <span class="n">md_cp</span> <span class="o">=</span> <span class="n">CacheFile</span><span class="o">.</span><span class="n">object_prefix</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">event_type</span><span class="p">)</span>
+
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">ensure_date</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">convert_time</span><span class="p">(</span><span class="n">start_time</span><span class="p">))</span>
+        <span class="n">end_time</span> <span class="o">=</span> <span class="n">ensure_date</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">convert_time</span><span class="p">(</span><span class="n">end_time</span><span class="p">))</span>
+
+        <span class="n">p</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cache_objects</span><span class="p">)</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">md_cp</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;**/*.csv&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">start_time</span> <span class="o">&lt;=</span> <span class="n">ensure_date</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">convert_time</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">stem</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">end_time</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">f</span>
+
+<div class="viewcode-block" id="CityIq.get_cache_files"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CityIq.get_cache_files">[docs]</a>    <span class="k">def</span> <span class="nf">get_cache_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">objects</span><span class="p">,</span> <span class="n">event_types</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">Sequence</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">event_types</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">event_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">event_types</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">event_types</span><span class="p">,</span> <span class="n">CityIqObject</span><span class="p">):</span>
+            <span class="n">objects</span> <span class="o">=</span> <span class="p">[</span><span class="n">objects</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">objects</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">et</span> <span class="ow">in</span> <span class="n">event_types</span><span class="p">:</span>
+                <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_event_cache_files</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">et</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_event_cache_file_times</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the datetimes for the cached files for this object and event type&quot;&quot;&quot;</span>
+
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_event_cache_files</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">convert_time</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">stem</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_missing_ranges</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;For obj and event time, find the ranges of times that don;t have cached files, between</span>
+<span class="sd">        start_time and end_time&quot;&quot;&quot;</span>
+
+        <span class="kn">from</span> <span class="nn">cityiq.task</span> <span class="k">import</span> <span class="n">request_ranges</span>
+
+        <span class="n">extant</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_event_cache_file_times</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">request_ranges</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">convert_time</span><span class="p">(</span><span class="n">start_time</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">convert_time</span><span class="p">(</span><span class="n">end_time</span><span class="p">),</span> <span class="n">extant</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_cache_csvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Cache event records in CSV files, organized by date&quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">.task</span> <span class="k">import</span> <span class="n">generate_days</span>
+        <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">pandas</span> <span class="k">import</span> <span class="n">json_normalize</span>
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">pandas.io.json</span> <span class="k">import</span> <span class="n">json_normalize</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Caching {len(events)} events&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">events</span><span class="p">:</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">json_normalize</span><span class="p">(</span><span class="n">events</span><span class="p">)</span>
+
+            <span class="n">df</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">timestamp</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;ms&#39;</span><span class="p">)</span> \
+                <span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">tz_localize</span><span class="p">(</span><span class="s1">&#39;UTC&#39;</span><span class="p">)</span> \
+                <span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">tz_convert</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tz</span><span class="p">)</span>
+
+            <span class="n">g</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">timestamp</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">date</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">dt</span><span class="p">,</span> <span class="n">dfd</span> <span class="ow">in</span> <span class="n">g</span><span class="p">:</span>
+                <span class="n">cf</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">cache_file</span><span class="p">(</span><span class="n">fetch_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">event_type</span><span class="o">=</span><span class="n">event_type</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;csv&#39;</span><span class="p">)</span>
+                <span class="n">cf</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">dfd</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Write empty files so we know not to try to re-download them</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Write empty files for range </span><span class="si">{start_time}</span><span class="s2"> to </span><span class="si">{end_time}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">dt</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">generate_days</span><span class="p">(</span><span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">):</span>
+                <span class="n">cf</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">cache_file</span><span class="p">(</span><span class="n">fetch_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">event_type</span><span class="o">=</span><span class="n">event_type</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;csv&#39;</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Write empty file: </span><span class="si">{cf.path}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">cf</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">())</span>
+
+
+    <span class="k">def</span> <span class="nf">_clean_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>  <span class="n">obj</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">):</span>
+
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_event_cache_files</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">):</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
+
+<div class="viewcode-block" id="CityIq.cache_events"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CityIq.cache_events">[docs]</a>    <span class="k">def</span> <span class="nf">cache_events</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 
         <span class="n">start_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">convert_time</span><span class="p">(</span><span class="n">start_time</span><span class="p">)</span>
         <span class="n">end_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">convert_time</span><span class="p">(</span><span class="n">end_time</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">fetch_tasks_class</span><span class="o">.</span><span class="n">make_tasks</span><span class="p">(</span><span class="n">objects</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">))</span></div>
+        <span class="c1"># Determine which days are missing from the cache.</span>
+        <span class="n">rr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_missing_ranges</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">st</span><span class="p">,</span> <span class="n">et</span> <span class="ow">in</span> <span class="n">rr</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Get </span><span class="si">{event_type}</span><span class="s2"> events for range </span><span class="si">{st}</span><span class="s2"> to </span><span class="si">{et}</span><span class="s2"> for </span><span class="si">{obj.uid}</span><span class="s2"> &quot;</span><span class="p">)</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_generate_events</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">events_url</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">st</span><span class="p">,</span> <span class="n">et</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cache_csvs</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">st</span><span class="p">,</span> <span class="n">et</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;No missing ranges in </span><span class="si">{start_time}</span><span class="s2"> to </span><span class="si">{end_time}</span><span class="s2"> for </span><span class="si">{obj.uid}</span><span class="s2"> &quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">rr</span></div>
+
+<div class="viewcode-block" id="CityIq.get_cached_events"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CityIq.get_cached_events">[docs]</a>    <span class="k">def</span> <span class="nf">get_cached_events</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+        <span class="n">frames</span> <span class="o">=</span> <span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_cache_files</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">event_type</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">)]</span>
+
+        <span class="k">if</span> <span class="n">frames</span><span class="p">:</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">frames</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">df</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">timestamp</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">df</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="CityIq.make_tasks"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CityIq.make_tasks">[docs]</a>    <span class="k">def</span> <span class="nf">make_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">objects</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">task_class</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fetch, and cache, events requests for a set of assets or locations &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">cityiq.task</span> <span class="k">import</span> <span class="n">DownloadTask</span>
+
+        <span class="k">if</span> <span class="n">task_class</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">task_class</span> <span class="o">=</span> <span class="n">DownloadTask</span>
+
+        <span class="n">start_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">convert_time</span><span class="p">(</span><span class="n">start_time</span><span class="p">)</span>
+        <span class="n">end_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">convert_time</span><span class="p">(</span><span class="n">end_time</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">task_class</span><span class="o">.</span><span class="n">make_tasks</span><span class="p">(</span><span class="n">objects</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="CityIq.run_async"><a class="viewcode-back" href="../../api/cityiq.html#cityiq.api.CityIq.run_async">[docs]</a>    <span class="k">def</span> <span class="nf">run_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tasks</span><span class="p">,</span> <span class="n">workers</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Run a set of tasks, created with make_tasks, with multiple workers &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">.util</span> <span class="k">import</span> <span class="n">run_async</span>
 
         <span class="k">for</span> <span class="n">task</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">run_async</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">workers</span><span class="o">=</span><span class="n">workers</span><span class="p">):</span>
             <span class="k">yield</span> <span class="n">task</span><span class="p">,</span> <span class="n">result</span></div>
@@ -787,7 +894,6 @@
 
         <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
             <span class="k">yield</span> <span class="n">t</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">run</span><span class="p">()</span></div>
-
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">total_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -840,9 +946,9 @@
 
 <h3>Navigation</h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../authors.html">Authors</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../config.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cli.html">Using the CLI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">Using the API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../api/modules.html">Module Reference</a></li>
 </ul>
 

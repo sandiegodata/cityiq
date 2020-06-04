@@ -99,17 +99,17 @@ class Asset(CityIqObject):
         return set(self.event_types) & set(events)
 
     def get_events(self, event_type, start_time, end_time=None):
-        from cityiq.task import DownloadTask
+        self.client.cache_events(self, event_type, start_time, end_time)
+
+        self.client.get_cached_events(self, event_type, start_time, end_time)
+
+
+    def generate_events(self, event_type, start_time, end_time=None):
 
         start_time = self.client.convert_time(start_time)
         end_time = self.client.convert_time(end_time)
 
-        tasks = DownloadTask.make_tasks([self], event_type, start_time, end_time)
-
-        results = list(r[1] for r in self.client.run_sync(tasks))
-
-        return results
-
+        yield from self.client.generate_events(self.events_url, event_type, start_time, end_time, bbox=False)
 
 
     def __getstate__(self):

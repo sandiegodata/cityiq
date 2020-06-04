@@ -4,7 +4,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>cityiq.cli package &#8212; cityiq 0.0.13.post0.dev2+gd82a06d.dirty documentation</title>
+    <title>cityiq.cli package &#8212; cityiq 0.1.1.post0.dev1+g5ce21ea.dirty documentation</title>
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
@@ -52,18 +52,9 @@
 <dl class="py function">
 <dt id="cityiq.cli.config.make_parser">
 <code class="sig-prename descclassname">cityiq.cli.config.</code><code class="sig-name descname">make_parser</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/cityiq/cli/config.html#make_parser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cityiq.cli.config.make_parser" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parse command line parameters</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>args</strong> (<em>[</em><a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a><em>]</em>) – command line parameters as list of strings</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>command line parameters namespace</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/argparse.html#argparse.Namespace" title="(in Python v3.6)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">argparse.Namespace</span></code></a></p>
-</dd>
-</dl>
+<dd><p>Create or print the <code class="docutils literal notranslate"><span class="pre">cityiq</span></code> module configuration.</p>
+<p>You can create a new configuration file with the <code class="docutils literal notranslate"><span class="pre">-w</span></code> option or
+print the configuration with <code class="docutils literal notranslate"><span class="pre">-p</span></code></p>
 </dd></dl>
 
 <dl class="py function">
@@ -188,206 +179,6 @@ any day in the future.</p>
 </div>
 <div class="section" id="module-cityiq.cli">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-cityiq.cli" title="Permalink to this headline">¶</a></h2>
-<p>The CityIq module includes two programs that can access a CityIQ system,
-<strong class="program">ciq_events</strong> to download events and <strong class="program">ciq_nodes</strong> to
-get locations and assets.</p>
-<div class="section" id="ciq-events-download-events">
-<h3><strong>ciq_events</strong>: Download events<a class="headerlink" href="#ciq-events-download-events" title="Permalink to this headline">¶</a></h3>
-<div class="section" id="ciq-events">
-<h4>ciq_events<a class="headerlink" href="#ciq-events" title="Permalink to this headline">¶</a></h4>
-<p>Download events and load them into the cache.</p>
-<blockquote>
-<div><p>The <strong class="program">ciq_events</strong> program will request events from a CityIQ system, one
-day at a tim, and cache the results. It will request the events from
-assets, based on which assets have <code class="docutils literal notranslate"><span class="pre">eventTypes</span></code> with the requested events.</p>
-<p>Because the program will request events for all of the assets that report an
-event type and makes one request per day, it can generate very large numbers of
-requests and take many hours to run. For instance this request:</p>
-<p>ciq_events -s 2020-01-01 -e 2020-06-01-01 PKIN PKOUT</p>
-<p>generates about 800,000 requests and will take a day to run.</p>
-<p>The <cite>cityiq</cite> module will not cache event requests for the current day or
-any day in the future.</p>
-</div></blockquote>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">usage: ciq_events [-h] [--version] [-v] [-vv] [-c CONFIG] [-s START_TIME]</span>
-<span class="go">                  [-e END_TIME]</span>
-<span class="go">                  events [events ...]</span>
-</pre></div>
-</div>
-<dl class="std option">
-<dt id="cmdoption-ciq_events-arg-events">
-<code class="sig-name descname">events</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_events-arg-events" title="Permalink to this definition">¶</a></dt>
-<dd><p>Names of events to scrape. One or more of: PKIN,PKOUT,PEDEVT,TFEVT,BICYCLE</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_events-h">
-<span id="cmdoption-ciq_events-help"></span><code class="sig-name descname">-h</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--help</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_events-h" title="Permalink to this definition">¶</a></dt>
-<dd><p>show this help message and exit</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_events-version">
-<code class="sig-name descname">--version</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_events-version" title="Permalink to this definition">¶</a></dt>
-<dd><p>show program’s version number and exit</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_events-v">
-<span id="cmdoption-ciq_events-verbose"></span><code class="sig-name descname">-v</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--verbose</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_events-v" title="Permalink to this definition">¶</a></dt>
-<dd><p>set loglevel to INFO</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_events-vv">
-<span id="cmdoption-ciq_events-very-verbose"></span><code class="sig-name descname">-vv</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--very-verbose</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_events-vv" title="Permalink to this definition">¶</a></dt>
-<dd><p>set loglevel to DEBUG</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_events-c">
-<span id="cmdoption-ciq_events-config"></span><code class="sig-name descname">-c</code><code class="sig-prename descclassname"> &lt;config&gt;</code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--config</code><code class="sig-prename descclassname"> &lt;config&gt;</code><a class="headerlink" href="#cmdoption-ciq_events-c" title="Permalink to this definition">¶</a></dt>
-<dd><p>Path to configuration file</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_events-s">
-<span id="cmdoption-ciq_events-start-time"></span><code class="sig-name descname">-s</code><code class="sig-prename descclassname"> &lt;start_time&gt;</code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--start-time</code><code class="sig-prename descclassname"> &lt;start_time&gt;</code><a class="headerlink" href="#cmdoption-ciq_events-s" title="Permalink to this definition">¶</a></dt>
-<dd><p>Starting time, in iso format. If not specified, use the configuration value ‘start_time’</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_events-e">
-<span id="cmdoption-ciq_events-end-time"></span><code class="sig-name descname">-e</code><code class="sig-prename descclassname"> &lt;end_time&gt;</code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--end-time</code><code class="sig-prename descclassname"> &lt;end_time&gt;</code><a class="headerlink" href="#cmdoption-ciq_events-e" title="Permalink to this definition">¶</a></dt>
-<dd><p>Ending time, in iso format. If not specified, end time is yesterday</p>
-</dd></dl>
-
-</div>
-</div>
-<div class="section" id="ciq-nodes-download-assets-and-locations">
-<h3><strong>ciq_nodes</strong>: Download assets and locations<a class="headerlink" href="#ciq-nodes-download-assets-and-locations" title="Permalink to this headline">¶</a></h3>
-<div class="section" id="ciq-nodes">
-<h4>ciq_nodes<a class="headerlink" href="#ciq-nodes" title="Permalink to this headline">¶</a></h4>
-<p>Get assets and locations for a CityIQ system</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">usage: ciq_nodes [-h] [--version] [-v] [-vv] [-C CONFIG] [-F]</span>
-<span class="go">                 [-M ASSET_MAP_CSV | -A ASSETS_CSV | -L LOCATIONS_CSV | --assets | --nodes | --cameras | --env_sensors | --em_sensors  | --mics | --locations | --walkways | --traffic_lanes | --parking_zones]</span>
-</pre></div>
-</div>
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-h">
-<span id="cmdoption-ciq_nodes-help"></span><code class="sig-name descname">-h</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--help</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-h" title="Permalink to this definition">¶</a></dt>
-<dd><p>show this help message and exit</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-version">
-<code class="sig-name descname">--version</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-version" title="Permalink to this definition">¶</a></dt>
-<dd><p>show program’s version number and exit</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-v">
-<span id="cmdoption-ciq_nodes-verbose"></span><code class="sig-name descname">-v</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--verbose</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-v" title="Permalink to this definition">¶</a></dt>
-<dd><p>set loglevel to INFO</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-vv">
-<span id="cmdoption-ciq_nodes-very-verbose"></span><code class="sig-name descname">-vv</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--very-verbose</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-vv" title="Permalink to this definition">¶</a></dt>
-<dd><p>set loglevel to DEBUG</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-C">
-<span id="cmdoption-ciq_nodes-config"></span><code class="sig-name descname">-C</code><code class="sig-prename descclassname"> &lt;config&gt;</code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--config</code><code class="sig-prename descclassname"> &lt;config&gt;</code><a class="headerlink" href="#cmdoption-ciq_nodes-C" title="Permalink to this definition">¶</a></dt>
-<dd><p>Path to configuration file</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-F">
-<span id="cmdoption-ciq_nodes-no-cache"></span><code class="sig-name descname">-F</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--no-cache</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-F" title="Permalink to this definition">¶</a></dt>
-<dd><p>Don’t use cached metadata; force a request to the API</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-M">
-<span id="cmdoption-ciq_nodes-asset-map-csv"></span><code class="sig-name descname">-M</code><code class="sig-prename descclassname"> &lt;asset_map_csv&gt;</code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--asset-map-csv</code><code class="sig-prename descclassname"> &lt;asset_map_csv&gt;</code><a class="headerlink" href="#cmdoption-ciq_nodes-M" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write a CSV file that maps assets to locations</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-A">
-<span id="cmdoption-ciq_nodes-assets-csv"></span><code class="sig-name descname">-A</code><code class="sig-prename descclassname"> &lt;assets_csv&gt;</code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--assets-csv</code><code class="sig-prename descclassname"> &lt;assets_csv&gt;</code><a class="headerlink" href="#cmdoption-ciq_nodes-A" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write all assets assets to a CSV file.</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-L">
-<span id="cmdoption-ciq_nodes-locations-csv"></span><code class="sig-name descname">-L</code><code class="sig-prename descclassname"> &lt;locations_csv&gt;</code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--locations-csv</code><code class="sig-prename descclassname"> &lt;locations_csv&gt;</code><a class="headerlink" href="#cmdoption-ciq_nodes-L" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write all assets assets to a CSV file.</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-assets">
-<code class="sig-name descname">--assets</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-assets" title="Permalink to this definition">¶</a></dt>
-<dd><p>Print all assets as JSON lines</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-nodes">
-<code class="sig-name descname">--nodes</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-nodes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Print all nodes as JSON lines</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-cameras">
-<code class="sig-name descname">--cameras</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-cameras" title="Permalink to this definition">¶</a></dt>
-<dd><p>Print all cameras as JSON lines</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-env_sensors">
-<code class="sig-name descname">--env_sensors</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-env_sensors" title="Permalink to this definition">¶</a></dt>
-<dd><p>Print all env_sensors as JSON lines</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-em_sensors">
-<code class="sig-name descname">--em_sensors</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-em_sensors" title="Permalink to this definition">¶</a></dt>
-<dd><p>Print all em_sensors  as JSON lines</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-mics">
-<code class="sig-name descname">--mics</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-mics" title="Permalink to this definition">¶</a></dt>
-<dd><p>Print all mics as JSON lines</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-locations">
-<code class="sig-name descname">--locations</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-locations" title="Permalink to this definition">¶</a></dt>
-<dd><p>Print all locations as JSON lines</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-walkways">
-<code class="sig-name descname">--walkways</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-walkways" title="Permalink to this definition">¶</a></dt>
-<dd><p>Print all walkways as JSON lines</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-traffic_lanes">
-<code class="sig-name descname">--traffic_lanes</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-traffic_lanes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Print all traffic_lanes as JSON lines</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-parking_zones">
-<code class="sig-name descname">--parking_zones</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-parking_zones" title="Permalink to this definition">¶</a></dt>
-<dd><p>Print all parking_zones as JSON lines</p>
-</dd></dl>
-
-</div>
-</div>
 </div>
 </div>
 
@@ -409,13 +200,10 @@ any day in the future.</p>
 
 <h3>Navigation</h3>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../authors.html">Authors</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="modules.html">Module Reference</a><ul class="current">
-<li class="toctree-l2 current"><a class="reference internal" href="cityiq.html">cityiq package</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="../config.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">Using the CLI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">Using the API</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">Module Reference</a></li>
 </ul>
 
 <div class="relations">

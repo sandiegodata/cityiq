@@ -4,7 +4,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>cityiq.config &#8212; cityiq 0.0.13.post0.dev2+gd82a06d.dirty documentation</title>
+    <title>cityiq.config &#8212; cityiq 0.1.1.post0.dev1+g5ce21ea.dirty documentation</title>
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
@@ -34,39 +34,7 @@
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
 <span class="c1"># Copyright (c) 2019 Civic Knowledge. This file is licensed under the terms of the</span>
 <span class="c1"># MIT License, included in this distribution as LICENSE</span>
-<span class="sd">&quot;&quot;&quot; The CityIq module and programs require a configuration file that holds</span>
-<span class="sd">credentials and urls. You can generate a default configuration with ::</span>
-
-<span class="sd">    ciq_config  -w</span>
-
-<span class="sd">The generated file is configured for the San Diego system. To use this system,</span>
-<span class="sd">you will just need to add your client id and secret to the file. ( The default</span>
-<span class="sd">file has credentials for San Diego, which may work if they are not expired . )</span>
-
-<span class="sd">The :py:class:`Config` object can be constructed on a path</span>
-<span class="sd">where the config file is location. If none is specified it will look for this</span>
-<span class="sd">file in several places, in this order:</span>
-<span class="sd">s</span>
-
-<span class="sd">- The path specified in the constructor</span>
-<span class="sd">- The path specified by the ``CITYIQ_CONFIG`` env var</span>
-<span class="sd">- ``.city-iq.yaml`` in the current dir</span>
-<span class="sd">- ``city-iq.yaml`` in the current dir</span>
-<span class="sd">- ``.city-iq.yaml`` in the user&#39;s home dir</span>
-
-<span class="sd">Each of the configuration files can be overridden with a keyword in the</span>
-<span class="sd">``Config`` object constructor, and each value can be accessed as an attribute</span>
-<span class="sd">or an index. The nested cache values are special. To access or set them, preceede the key</span>
-<span class="sd">with `cache_`.</span>
-
-<span class="sd">.. code-block:: python</span>
-
-<span class="sd">    c = Config(default_zone = &#39;SD-IE-TRAFFIC&#39;, cache_objects=&#39;/Volumes/foobar)</span>
-
-<span class="sd">    print(c.default_zone)</span>
-<span class="sd">    print(c[&#39;cache_objects&#39;])</span>
-
-
+<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span> <span class="nn">os</span> <span class="k">import</span> <span class="n">environ</span>
@@ -95,7 +63,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="s1">&#39;client_id secret bbox zone  uaa_url metadata_url event_url _config_file &#39;</span> \
-                          <span class="s1">&#39;start_time cache_dir events_cache timezone&#39;</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+                          <span class="s1">&#39;start_time timezone cache_meta cache_objects cache_errors&#39;</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">env_vars</span> <span class="o">=</span> <span class="p">{</span><span class="n">e</span><span class="p">:</span> <span class="n">f</span><span class="s2">&quot;CITYIQ_{e.upper()}&quot;</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">}</span>
 
@@ -215,9 +183,9 @@
 
 <h3>Navigation</h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../authors.html">Authors</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../config.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cli.html">Using the CLI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">Using the API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../api/modules.html">Module Reference</a></li>
 </ul>
 

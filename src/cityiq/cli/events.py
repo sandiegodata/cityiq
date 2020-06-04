@@ -9,7 +9,7 @@ import logging
 import sys
 
 from cityiq import __version__, CityIqError
-from cityiq.task import DownloadDataframeTask, DownloadTask
+from cityiq.task import DownloadTask
 from cityiq.util import event_type_to_location_type
 from progress.bar import ShadyBar as Bar
 
@@ -73,11 +73,19 @@ def make_parser():
 
     parser.add_argument('-c', '--config', help='Path to configuration file')
 
+    parser.add_argument('-w', '--workers', help='Number of threads to use', default=4, type=int)
+
     parser.add_argument('-s', '--start-time', help='Starting time, in iso format. If not specified, use the '
                                                     "configuration value 'start_time' ")
-    parser.add_argument('-e', '--end-time', help='Ending time, in iso format. If not specified, end time is yesterday ')
+    parser.add_argument('-f', '--end-time', help='Ending time, in iso format. If not specified, end time is yesterday ')
 
-    parser.add_argument('events', nargs='+', help='Names of events to scrape. One or more of: '+ve_string)
+    parser.add_argument('-e', '--events', nargs='+', help='Names of events to scrape. One or more of: '+ve_string)
+
+    parser.add_argument('-o','--output-name',
+                        help='Output file, where events are written in CSV format')
+
+    parser.add_argument('-O', '--output', action='store_true',
+                        help='Coalesce data into one CSV file per asset')
 
     return parser
 
@@ -139,7 +147,6 @@ def _main(args):
 
     print("Using config:", config._config_file)
 
-
     events = [e.upper() for e in args.events]
 
     try:
@@ -150,21 +157,56 @@ def _main(args):
 
     c = CityIq(config)
 
+    end_time = c.convert_time(args.end_time)
+    start_time = c.convert_time(start_time_str)
+
     assets = list(c.assets_by_event(events))  # Get all assets that have the Bicycle event
 
     print(f"{len(assets)} assets")
 
-    tasks = c.make_tasks(DownloadTask, assets, events,  start_time_str, args.end_time)
-
-    with ProgressBar('Downloading', max=len(tasks),
-                     suffix='%(index)d of %(max)d  (%(percent).1f%%) %(extant)d extant %(downloaded)d downloaded - ETA %(eta_td)s') as bar:
-
-        for i, (task, result) in enumerate(c.run_async(tasks)):
-            bar.next()
-            bar.update_task(task)
+    tasks = c.make_tasks(assets, events,  start_time, end_time)
 
 
+    if not args.output:
 
+        with ProgressBar('Downloading', max=len(tasks),
+                         suffix='%(index)d of %(max)d  (%(percent).1f%%) - ETA %(eta_td)s') as bar:
+            # suffix='%(index)d of %(max)d  (%(percent).1f%%) %(extant)d extant %(downloaded)d downloaded - ETA %(eta_td)s') as bar:
+
+            for i, (task, result) in enumerate(c.run_async(tasks)):
+                bar.next()
+                bar.update_task(task)
+    else:
+        import pandas as pd
+        from tqdm import tqdm
+        from pathlib import Path
+
+        event_name = '-'.join(e.lower() for e in events)
+
+        for a in tqdm(assets, desc='Assets'):
+            name = f"{event_name}_{start_time.date().isoformat()}_{end_time.date().isoformat()}/{a.uid}.csv"
+
+            files = list(c.get_cache_files([a], events, start_time, end_time))
+
+            frames = []
+            for f in tqdm(files, desc="Frames", leave=False):
+                frames.append(pd.read_csv(f))
+
+            if frames:
+                df = pd.concat(frames, sort=False)
+            #    df['timestamp'] = pd.to_datetime(df.timestamp)
+
+                p = Path(name)
+
+                if not p.parent.exists():
+                    p.parent.mkdir()
+
+                df.to_csv(name)
+
+
+
+
+    print("Done")
 
 def run():
     """Entry point for console_scripts

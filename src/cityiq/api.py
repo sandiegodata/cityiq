@@ -3,57 +3,6 @@
 # MIT License, included in this distribution as LICENSE
 """
 
-API objects are the primary way to get access to assets and events. :py:class:`CityIq` is the top level access
-object. The API offers access to Locations, Events and Events.
-
-Typically, you will construct :py:class:`CityIq` from a :py:class:`Config`. If a configuration is not specific,
-the system will look for the file in default locations. You can also override individual configuration parameters
-with keyword arguments to the constructor.
-
-Metadata Access
----------------
-
-Metadata, for both locations and assets, can be fetched with property accessors. The bounding box for the queries can
-be set in the configuration, or on the  :py:class:`CityIq` constructor.
-
-The asset metadata properties are:
-
-- :py:attr:`CityIq.assets` : All assets
-- :py:attr:`CityIq.nodes` : Nodes, the parents for other assets on a pole
-- :py:attr:`CityIq.cameras` : All assets
-- :py:attr:`CityIq.em_sensors` : ?
-- :py:attr:`CityIq.env_sensors` : Environmental sensors
-
-The location metadata properties are:
-
-- :py:attr:`CityIq.locations` : All locations
-- :py:attr:`CityIq.walkways` :
-- :py:attr:`CityIq.parking_zones` :
-- :py:attr:`CityIq.traffic_lane` :
-
-Events can be fetched with :py:func:`cityiq.api.CityIq.events`
-
-Each of these acessor properties or functions returns a generator that generates objects of a specific type,
-one base class for each of Locations, Assets or Events:
-
-- :py:class:`Asset`
-- :py:class:`Location`
-- :py:class:`Event`
-
-.. code-block:: python
-
-    bbox = '32.718987:-117.174244,32.707356:-117.154850'
-
-    c = CityIq(bbox=bbox) # Use default config, override bbox
-
-    # Get Locations
-    locations = list(c.locations)
-
-    # Get the assets at this location:
-    for location in locations:
-        do_something_with(location.assets
-
-
 
 """
 
@@ -68,13 +17,14 @@ from time import time
 import pytz
 import requests
 from cityiq.util import event_to_zone
-from cityiq.util import run_async
 from dateutil.parser import parse
+from requests import HTTPError
 from slugify import slugify
 
 from .config import Config
 from .exceptions import ConfigurationError, TimeError, CityIqError
-from .util import json_serial, log_message
+from .util import json_serial
+
 
 logger = logging.getLogger(__name__)
 
@@ -120,66 +70,43 @@ class CityIqObject(object):
             else:
                 return Polygon(vertices)
 
-    def get_fetch_task(self, event_type, start_time, end_time):
-        from dateutil.relativedelta import relativedelta
-        from .task import FetchTask
-
-        d1 = relativedelta(days=1)
-
-        today = self.client.tz.localize(datetime.datetime.now()).date()
-
-        return FetchTask(self, event_type, start_time, end_time)
 
     @property
     def events_url(self):
         """Return the URL for fetching events, called from get_events() in the base class. """
         return self.client.config.event_url + self.events_url_suffix.format(uid=self.uid)
 
-    def cache_file(self, fetch_func=None, event_type=None, dt=None, group=None):
+    def cache_file(self, fetch_func=None, event_type=None, dt=None, group=None, format='csv'):
         return CacheFile(self.client.config.cache_objects, self, fetch_func=fetch_func,
-                         event_type=event_type, dt=dt, group=group)
+                         event_type=event_type, dt=dt, group=group, format=format)
 
     def write(self):
         """Write data to the cache"""
         self.cache_file().write(self.data)
 
     def get_events(self, event_type, start_time, end_time=None):
-        start_time = self.client.convert_time(start_time)
-        end_time = self.client.convert_time(end_time)
 
-        return self.client._events(self.events_url, event_type, start_time, end_time, bbox=False)
+        return self.client.get_events(self,event_type, start_time, end_time)
 
-    def get_day_cache_file(self, event_type, dt):
-        from dateutil.relativedelta import relativedelta
-
-        dt = self.client.convert_time(dt)
-
-        d1 = relativedelta(days=1)
-
-        start_time = dt.replace(hour=0, minute=0, second=0, microsecond=0)
-        end_time = start_time + d1
-
-        def ff():
-            r = self.client._events(self.events_url, event_type, start_time, end_time, bbox=False)
-            return r
-
-        return self.cache_file(ff, event_type, dt)
-
-    def get_events_day(self, event_type, dt):
-        """Get events for a single day, from the start of the day of the given date to the next day, exclusive"""
-
-        return self.get_day_cache_file(event_type, dt).run()
 
     def __str__(self):
         return "<{}: {}>".format(type(self).__name__, self.data)
 
+
+def to_date(t):
+    try:
+        return t.date()
+    except AttributeError:
+        return t
 
 class CacheFile(object):
     """Represents a cached file of records for one location or asset, one type of event,
     and one day. Or, if the date and event type are omitted, just the information
     about an asset or location"""
 
-    def __init__(self, cache_path, access_object, fetch_func=None, event_type=None, dt=None, group=None):
+
+
+    def __init__(self, cache_path, access_object, fetch_func=None, event_type=None, dt=None, end_time=None, group=None, format='json'):
         """
 
         :param cache_path: Path to the base object cache
@@ -200,13 +127,15 @@ class CacheFile(object):
         self._access_object = access_object
         self._event_type = event_type
         self._group = group
-        self._dt = dt
+        self._dt = to_date(dt)
+        self._end_time = to_date(end_time)
+        self._format = format
 
         self.path  # Just check that it's ok
 
-        self.today = self._access_object.client.convert_time('now').replace(hour=0, minute=0, second=0, microsecond=0)
+        self.today = to_date(self._access_object.client.convert_time('now').replace(hour=0, minute=0, second=0, microsecond=0))
 
-        self._write = self._dt is None or self._dt < self.today  # Don't write cache for today.
+        self._write = self._dt is None or self._end_time is not None or self._dt < self.today  # Don't write cache for today on day cache files.
 
     def run(self):
 
@@ -218,6 +147,16 @@ class CacheFile(object):
             v = self._fetch_func()
             self.write(v)
             return v
+
+
+    @classmethod
+    def object_prefix(cls, obj, event_type):
+
+        uid = obj.uid
+        prefix = uid[:2] if uid else 'none'
+
+
+        return f'{obj.object_sub_dir}/{prefix}/{uid}/{event_type}/'
 
     @property
     def path(self):
@@ -232,15 +171,14 @@ class CacheFile(object):
         if self._dt is not None and self._event_type is not None and self._group is None:
 
             return self._cache_path.joinpath(
-                Path(
-                    f'{object_sub_dir}/{prefix}/{uid}/{self._event_type}/{self._dt.year}-{self._dt.month:02}/'
-                    + f'{uid}-{self._dt.date().isoformat()}-{self._event_type}.json'))
+                Path( self.object_prefix(ao, self._event_type) +
+                    f'{self._dt.isoformat()}.{self._format}'))
 
         elif self._dt is None and self._event_type is None:
 
             file_name = 'object' if self._group is None else self._group
 
-            return self._cache_path.joinpath(Path(f'{object_sub_dir}/{prefix}/{uid}/{file_name}.json'))
+            return self._cache_path.joinpath(Path(f'{object_sub_dir}/{prefix}/{uid}/{file_name}.{self._format}'))
         else:
             raise CityIqError("Bad combination of event_type and dt: either both are None or both not None,"
                               "and group can't be used with them. "
@@ -261,6 +199,8 @@ class CacheFile(object):
             return json.load(f)
 
     def write(self, result):
+        """Write Json data, or a CSV if the result valule is a dataframe"""
+        import pandas as pd
 
         if not self._write:
             logger.info("Won't write for today {} or later {}".format(self.today, str(self.path)))
@@ -274,8 +214,14 @@ class CacheFile(object):
         except AttributeError:
             raise  # The token is not a Path
 
-        with self.path.open('w') as f:
-            json.dump(result, f, default=json_serial)
+        if isinstance(result, pd.DataFrame):
+            if self._format == 'json':
+                result.to_json(self.path, orient='table')
+            elif self._format == 'csv':
+                result.to_csv(self.path)
+        else:
+            with self.path.open('w') as f:
+                json.dump(result, f, default=json_serial)
 
         logger.info("wrote {}".format(str(self.path)))
 
@@ -294,7 +240,7 @@ class CityIq(object):
     asset_url_suffix = '/api/v2/metadata/assets/{uid}'
     location_url_suffix = '/api/v2/metadata/locations/{uid}'
 
-    def __init__(self, config=None, cache_metadata=True, cache_events=True, **kwargs):
+    def __init__(self, config=None, cache_metadata=True, **kwargs):
         CityIq
         if config:
             self.config = config
@@ -306,7 +252,7 @@ class CityIq(object):
         self.tz = pytz.timezone(self.config.timezone)
 
         self.cache_metadata = cache_metadata
-        self.cache_events = cache_events
+
 
         self.metadata_cache = Path(self.config.cache_meta)
 
@@ -360,6 +306,7 @@ class CityIq(object):
         """Convert a variety of time formats into the millisecond format
         used by the CityIQ interface. Converts naieve times to the configured timezone"""
 
+
         now = datetime.now()
 
         def is_micros(v):
@@ -392,6 +339,9 @@ class CityIq(object):
 
         try:
             return self.tz.localize(dt)
+        except AttributeError:
+            # Probably a date.
+            return self.convert_time(datetime.combine(dt, datetime.min.time()))
         except ValueError:
             # Already localized:
             return dt
@@ -432,43 +382,68 @@ class CityIq(object):
 
         return url
 
-    def _http_get(self, url, zone=None, params=None, *args, **kwargs):
-
-        url = self.process_url(url, params)
-
-        logger.debug(url)
-
-        r = requests.get(url, headers=self.request_headers(zone), *args, **kwargs)
-
-        try:
-            r.raise_for_status()
-        except Exception as e:
-
-            logger.error(log_message(r) + r.text)
-            raise
-
-        return r
-
     def http_get(self, url, zone=None, params=None, *args, **kwargs):
-        return self._http_get(url, zone, params, *args, **kwargs)
+        """
+        Get the events of one type
+        :param start_time:
+        :param span:  time span in seconds
+        :param event_type:
+        :param tz_name:
+        :return:
+        """
+        # logger.debug(f"Run fetch task {str(self)}")
 
-    def _get_page(self, url, page, zone, bbox, query):
+        from time import sleep
 
-        params = {
-            'page': page,
-            'size': 2000,
-            'bbox': bbox,
-        }
+        delay = 5
+        last_exception = None
 
-        if query:
-            params['q'] = "{}:{}".format(*query)
+        for i in range(5):  # 5 retries on errors
 
-        logger.debug("CityIq: get_page url={} page={}".format(url, str(page)))
-        r = self.http_get(url, zone, params)
+            try:
+                url = self.process_url(url, params)
 
-        return r.json()
+                logger.debug(url)
 
-    def get_pages(self, url, query=None, zone=None, bbox=None):
+                r = requests.get(url, headers=self.request_headers(zone), *args, **kwargs)
+
+                r.raise_for_status()
+
+                return r
+
+            except HTTPError as e:
+                logger.error('{} Failed. Retry in  {} seconds: {}'.format(str(self), delay, e))
+                err = {
+                    'request_url': e.request.url,
+                    'request_headers': dict(e.request.headers),
+                    'response_headers': dict(e.response.headers),
+                    'response_body': e.response.text
+                }
+
+                fn = slugify(url)
+
+                p = Path(self.config.cache_errors).joinpath(fn)
+
+                if not p.parent.exists():
+                    p.parent.mkdir(parents=True, exist_ok=True)
+
+                with p.open('w') as f:
+                    json.dump(err, f, default=json_serial, indent=4)
+
+                delay *= 2  # Delay backoff
+                delay = delay if delay <= 60 else 60
+                sleep(delay)
+                last_exception = e
+            except Exception as e:
+
+                logger.error(f"Error '{type(e)}: {e}' for {self.access_object}")
+                last_exception = e
+
+        if last_exception:
+            logger.error(f"{last_exception} Giving up.")
+            raise last_exception
+
+    def get_meta_pages(self, url, params=None, query=None, zone=None, bbox=None):
 
         zone = zone if zone else self.config.zone
 
@@ -483,11 +458,26 @@ class CityIq(object):
         page = 0
         index = 0
         while True:
-            r = self._get_page(url, page, zone, bbox, query)
 
-            content = r['content']
+            page_params = {
+                'page': page,
+                'size': 20000,
+                'bbox': bbox,
+            }
 
-            for e in content:
+            if params:
+                params.update(page_params)
+            else:
+                params = page_params
+
+            if query:
+                params['q'] = "{}:{}".format(*query)
+
+            logger.debug("CityIq: get_page url={} page={}".format(url, str(page)))
+
+            r = self.http_get(url, zone, params).json()
+
+            for e in r['content']:
                 e['index'] = index
                 e['page'] = page
                 e['total'] = r['totalElements']
@@ -507,14 +497,14 @@ class CityIq(object):
         if 'eventTypes' in e and not e['eventTypes']:
             e['eventTypes'] = []
 
-        return dclass(self, e, use_cache=self.cache_events)
+        return dclass(self, e, use_cache=self.cache_metadata)
 
     def _new_location(self, e):
         from cityiq.location import (Location)
 
         dclass = Location.dclass_map.get(e['locationType'], Location)  # probably fragile
 
-        return dclass(self, e, use_cache=self.cache_events)
+        return dclass(self, e, use_cache=self.cache_metadata)
 
     def get_assets(self, device_type=None, zone=None, bbox=None, use_cache=None):
 
@@ -534,8 +524,8 @@ class CityIq(object):
 
         assets = []
 
-        for e in self.get_pages(self.config.metadata_url + self.assets_search_suffix,
-                                query=query, zone=zone, bbox=bbox):
+        for e in self.get_meta_pages(self.config.metadata_url + self.assets_search_suffix,
+                                     query=query, zone=zone, bbox=bbox):
             assets.append(self._new_asset(e))
 
         self.set_meta_cache(cache_key, assets)
@@ -556,13 +546,6 @@ class CityIq(object):
         """Return all system assets"""
         return self.get_assets(' ')
 
-    @property
-    def asset_dataframe(self):
-        """Return assets in row form in a pandas Dataframe"""
-        from cityiq.asset import Asset
-        from pandas import DataFrame
-
-        return DataFrame([e.row for e in self.assets], columns=Asset.row_header)
 
     @property
     def nodes(self):
@@ -612,8 +595,8 @@ class CityIq(object):
 
         locations = []
 
-        for e in self.get_pages(self.config.metadata_url + self.locations_search_suffix,
-                                query=query, zone=zone, bbox=bbox):
+        for e in self.get_meta_pages(self.config.metadata_url + self.locations_search_suffix,
+                                     query=query, zone=zone, bbox=bbox):
             locations.append(self._new_location(e))
 
         self.set_meta_cache(cache_key, locations)
@@ -693,7 +676,7 @@ class CityIq(object):
             'eventType': event_type,
             'startTime': int(start_time.timestamp() * 1000),
             'endTime': int(end_time.timestamp() * 1000),
-            'pageSize': 20000
+            'pageSize': 20000  # param is different from metadata daata service, which uses 'size'
         }
 
         logger.debug(f"Param range {start_time} to {end_time}")
@@ -703,13 +686,17 @@ class CityIq(object):
 
         return params
 
-    def _events(self, url, event_type, start_time, end_time, bbox=None):
-        """"""
+    def _generate_events(self, url, event_type, start_time, end_time, bbox=None):
+        """Generate events from a request. The routine will get up to pageSize
+        events with in a date range, then mke another request with a new date range if the last
+        event returned is not the last in the date range. """
 
         page = 0
         records = []
 
         while True:
+
+            logger.debug(f"Request events from {start_time} to {end_time}")
 
             params = self._event_params(start_time, end_time, event_type, bbox=bbox)
 
@@ -721,8 +708,9 @@ class CityIq(object):
                 print(r.text)
                 raise
 
-            content = d['content']
-            records += content
+            logger.debug(f"Got {len(d['content'])}")
+            yield from d['content']
+
             md = d['metaData']
 
             if md['request_limit'] < md['totalRecords']:
@@ -730,20 +718,140 @@ class CityIq(object):
                 start_time = int(md['endTs'])
 
             else:
+                return
 
-                logger.debug(f"Got {len(records)} events")
-                return records
+    def _event_cache_files(self, obj, event_type, start_time, end_time):
 
-    def make_tasks(self, fetch_tasks_class, objects, events, start_time, end_time):
-        """Fetch, and cache, events requests for a set of assets or locations """
+        from cityiq.task import ensure_date
+
+        md_cp = CacheFile.object_prefix(obj, event_type)
+
+        start_time = ensure_date(self.convert_time(start_time))
+        end_time = ensure_date(self.convert_time(end_time))
+
+        p = Path(self.config.cache_objects).joinpath(md_cp)
+
+        for f in p.glob('**/*.csv'):
+            if start_time <= ensure_date(self.convert_time(f.stem)) < end_time:
+                yield f
+
+    def get_cache_files(self, objects, event_types, start_time, end_time):
+        from collections import Sequence
+
+        if isinstance(event_types, str):
+            event_types = [event_types]
+
+        if isinstance(event_types, CityIqObject):
+            objects = [objects]
+
+        for obj in objects:
+            for et in event_types:
+                yield from self._event_cache_files(obj, et, start_time, end_time)
+
+
+    def _event_cache_file_times(self, obj, event_type, start_time, end_time):
+        """Return the datetimes for the cached files for this object and event type"""
+
+        for f in self._event_cache_files(obj, event_type, start_time, end_time):
+            yield self.convert_time(f.stem)
+
+    def _missing_ranges(self, obj, event_type, start_time, end_time):
+        """For obj and event time, find the ranges of times that don;t have cached files, between
+        start_time and end_time"""
+
+        from cityiq.task import request_ranges
+
+        extant = list(self._event_cache_file_times(obj, event_type, start_time, end_time))
+
+        return request_ranges(self.convert_time(start_time), self.convert_time(end_time), extant)
+
+    def _cache_csvs(self, obj, event_type, events, start_time, end_time):
+        """Cache event records in CSV files, organized by date"""
+        from .task import generate_days
+        import pandas as pd
+        try:
+            from pandas import json_normalize
+        except ImportError:
+            from pandas.io.json import json_normalize
+
+        logger.debug(f"Caching {len(events)} events")
+
+        if events:
+            df = json_normalize(events)
+
+            df['timestamp'] = pd.to_datetime(df.timestamp, unit='ms') \
+                .dt.tz_localize('UTC') \
+                .dt.tz_convert(self.tz)
+
+            g = df.groupby(df.timestamp.dt.date)
+
+            for dt, dfd in g:
+                cf = obj.cache_file(fetch_func=None, event_type=event_type, dt=dt, group=None, format='csv')
+                cf.write(dfd)
+        else:
+            # Write empty files so we know not to try to re-download them
+            logger.debug(f"Write empty files for range {start_time} to {end_time}")
+
+            for dt, _ in generate_days(start_time, end_time):
+                cf = obj.cache_file(fetch_func=None, event_type=event_type, dt=dt, group=None, format='csv')
+                logger.debug(f"Write empty file: {cf.path}")
+                cf.write(pd.DataFrame())
+
+
+    def _clean_cache(self,  obj, event_type, start_time, end_time):
+
+        for f in self._event_cache_files(obj, event_type, start_time, end_time):
+            f = Path(f)
+
+            if f.exists():
+                f.unlink()
+
+    def cache_events(self, obj, event_type, start_time, end_time, bbox=None):
 
         start_time = self.convert_time(start_time)
         end_time = self.convert_time(end_time)
 
-        return list(fetch_tasks_class.make_tasks(objects, events, start_time, end_time))
+        # Determine which days are missing from the cache.
+        rr = self._missing_ranges(obj, event_type, start_time, end_time)
+
+        for st, et in rr:
+            logger.debug(f"Get {event_type} events for range {st} to {et} for {obj.uid} ")
+            e = list(self._generate_events(obj.events_url, event_type, st, et, bbox=bbox))
+            self._cache_csvs(obj, event_type, e, st, et)
+        else:
+            logger.debug(f"No missing ranges in {start_time} to {end_time} for {obj.uid} ")
+
+        return rr
+
+    def get_cached_events(self, obj, event_type, start_time, end_time, bbox=None):
+        import pandas as pd
+
+        frames = [pd.read_csv(f) for f in self.get_cache_files(obj, event_type, start_time, end_time)]
+
+        if frames:
+            df = pd.concat(frames, sort=False)
+            df['timestamp'] = pd.to_datetime(df.timestamp)
+            return df
+        else:
+            return pd.DataFrame()
+
+
+
+    def make_tasks(self, objects, events, start_time, end_time, task_class=None):
+        """Fetch, and cache, events requests for a set of assets or locations """
+        from cityiq.task import DownloadTask
+
+        if task_class is None:
+            task_class = DownloadTask
+
+        start_time = self.convert_time(start_time)
+        end_time = self.convert_time(end_time)
+
+        return list(task_class.make_tasks(objects, events, start_time, end_time))
 
     def run_async(self, tasks, workers=4):
         """Run a set of tasks, created with make_tasks, with multiple workers """
+        from .util import run_async
 
         for task, result in run_async(tasks, workers=workers):
             yield task, result
@@ -753,7 +861,6 @@ class CityIq(object):
 
         for t in tasks:
             yield t, t.run()
-
 
     @property
     def total_bounds(self):

@@ -4,7 +4,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>CityIQ API &#8212; cityiq 0.0.13.post0.dev2+gd82a06d.dirty documentation</title>
+    <title>CityIQ API &#8212; cityiq 0.1.1.post0.dev1+g5ce21ea.dirty documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -14,7 +14,7 @@
     <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="License" href="license.html" />
+    <link rel="next" title="Configuration" href="config.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -38,306 +38,60 @@ particular focus on getting metadata and parking events. The interface includes
 a basic access object for getting metadata and events, a scraper object for
 mass downloading events, and a command line tool for downloading and processing
 events.</p>
-<div class="section" id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
-<p>Use pip:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">cityiq</span>
+<div class="section" id="quickstart">
+<h2>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h2>
+<p>Install the module with pip:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install cityiq
 </pre></div>
 </div>
-</div>
-<div class="section" id="configuration">
-<h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h2>
-<p>The CityIq module and programs require a configuration file that holds
-credentials and urls. You can generate a default configuration with</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ciq_config</span>  <span class="o">-</span><span class="n">w</span>
+<p>Then generate a configuration file with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ciq_config  -w
 </pre></div>
 </div>
-<p>The generated file is configured for the San Diego system. To use this system,
-you will just need to add your client id and secret to the file. ( The default
-file has credentials for San Diego, which may work if they are not expired . )</p>
-<p>The <a class="reference internal" href="api/cityiq.html#cityiq.config.Config" title="cityiq.config.Config"><code class="xref py py-class docutils literal notranslate"><span class="pre">Config</span></code></a> object can be constructed on a path
-where the config file is location. If none is specified it will look for this
-file in several places, in this order:
-s</p>
-<ul class="simple">
-<li><p>The path specified in the constructor</p></li>
-<li><p>The path specified by the <code class="docutils literal notranslate"><span class="pre">CITYIQ_CONFIG</span></code> env var</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">.city-iq.yaml</span></code> in the current dir</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">city-iq.yaml</span></code> in the current dir</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">.city-iq.yaml</span></code> in the user’s home dir</p></li>
-</ul>
-<p>Each of the configuration files can be overridden with a keyword in the
-<code class="docutils literal notranslate"><span class="pre">Config</span></code> object constructor, and each value can be accessed as an attribute
-or an index. The nested cache values are special. To access or set them, preceede the key
-with <cite>cache_</cite>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">c</span> <span class="o">=</span> <span class="n">Config</span><span class="p">(</span><span class="n">default_zone</span> <span class="o">=</span> <span class="s1">&#39;SD-IE-TRAFFIC&#39;</span><span class="p">,</span> <span class="n">cache_objects</span><span class="o">=</span><span class="s1">&#39;/Volumes/foobar)</span>
-
-<span class="k">print</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">default_zone</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s1">&#39;cache_objects&#39;</span><span class="p">])</span>
+<p>Edit the file with your credentials and other information for your system. The
+default file is configured for the San Diego system, but you may have to <a class="reference external" href="https://www.sandiego.gov/sustainability/energy-and-water-efficiency/programs-projects/smart-city">update
+the client id and password</a>.</p>
+<p>You can list the nodes, assets and locations in the system with the <strong class="program">ciq_nodes</strong>
+program:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ciq_nodes --locations <span class="c1"># display locations a JSON lines</span>
+ciq_nodes --cameras <span class="c1"># display camera assets as JSON lines</span>
+<span class="c1"># etc</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="basic-cli-use">
-<h2>Basic CLI Use<a class="headerlink" href="#basic-cli-use" title="Permalink to this headline">¶</a></h2>
-<p>The CityIq module includes two programs that can access a CityIQ system,
-<strong class="program">ciq_events</strong> to download events and <strong class="program">ciq_nodes</strong> to
-get locations and assets.</p>
-<div class="section" id="ciq-events-download-events">
-<h3><strong>ciq_events</strong>: Download events<a class="headerlink" href="#ciq-events-download-events" title="Permalink to this headline">¶</a></h3>
-<div class="section" id="ciq-events">
-<h4>ciq_events<a class="headerlink" href="#ciq-events" title="Permalink to this headline">¶</a></h4>
-<p>Parse command line parameters</p>
-<blockquote>
-<div><dl class="simple">
-<dt>Args:</dt><dd><p>args ([str]): command line parameters as list of strings</p>
-</dd>
-<dt>Returns:</dt><dd><p><a class="reference external" href="https://docs.python.org/3.6/library/argparse.html#argparse.Namespace" title="(in Python v3.6)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">argparse.Namespace</span></code></a>: command line parameters namespace</p>
-</dd>
-</dl>
-</div></blockquote>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">usage: ciq_events [-h] [--version] [-v] [-vv] [-c CONFIG] [-s START_TIME]</span>
-<span class="go">                  [-e END_TIME]</span>
-<span class="go">                  events [events ...]</span>
+<p>You can also dump all assets or all locations to CSV files.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ciq_nodes -A assets.csv
+ciq_nodes -L locations.csv
 </pre></div>
 </div>
-<dl class="std option">
-<dt id="cmdoption-ciq_events-arg-events">
-<code class="sig-name descname">events</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_events-arg-events" title="Permalink to this definition">¶</a></dt>
-<dd><p>Names of events to scrape. One or more of: PKIN,PKOUT,PEDEVT,TFEVT,BICYCLE</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_events-h">
-<span id="cmdoption-ciq_events-help"></span><code class="sig-name descname">-h</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--help</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_events-h" title="Permalink to this definition">¶</a></dt>
-<dd><p>show this help message and exit</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_events-version">
-<code class="sig-name descname">--version</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_events-version" title="Permalink to this definition">¶</a></dt>
-<dd><p>show program’s version number and exit</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_events-v">
-<span id="cmdoption-ciq_events-verbose"></span><code class="sig-name descname">-v</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--verbose</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_events-v" title="Permalink to this definition">¶</a></dt>
-<dd><p>set loglevel to INFO</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_events-vv">
-<span id="cmdoption-ciq_events-very-verbose"></span><code class="sig-name descname">-vv</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--very-verbose</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_events-vv" title="Permalink to this definition">¶</a></dt>
-<dd><p>set loglevel to DEBUG</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_events-c">
-<span id="cmdoption-ciq_events-config"></span><code class="sig-name descname">-c</code><code class="sig-prename descclassname"> &lt;config&gt;</code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--config</code><code class="sig-prename descclassname"> &lt;config&gt;</code><a class="headerlink" href="#cmdoption-ciq_events-c" title="Permalink to this definition">¶</a></dt>
-<dd><p>Path to configuration file</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_events-s">
-<span id="cmdoption-ciq_events-start-time"></span><code class="sig-name descname">-s</code><code class="sig-prename descclassname"> &lt;start_time&gt;</code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--start-time</code><code class="sig-prename descclassname"> &lt;start_time&gt;</code><a class="headerlink" href="#cmdoption-ciq_events-s" title="Permalink to this definition">¶</a></dt>
-<dd><p>Starting time, in iso format. If not specified, use the configuration value ‘start_time’</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_events-e">
-<span id="cmdoption-ciq_events-end-time"></span><code class="sig-name descname">-e</code><code class="sig-prename descclassname"> &lt;end_time&gt;</code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--end-time</code><code class="sig-prename descclassname"> &lt;end_time&gt;</code><a class="headerlink" href="#cmdoption-ciq_events-e" title="Permalink to this definition">¶</a></dt>
-<dd><p>Ending time, in iso format. If not specified, end time is yesterday</p>
-</dd></dl>
-
-</div>
-</div>
-<div class="section" id="ciq-nodes-download-assets-and-locations">
-<h3><strong>ciq_nodes</strong>: Download assets and locations<a class="headerlink" href="#ciq-nodes-download-assets-and-locations" title="Permalink to this headline">¶</a></h3>
-<div class="section" id="ciq-nodes">
-<h4>ciq_nodes<a class="headerlink" href="#ciq-nodes" title="Permalink to this headline">¶</a></h4>
-<p>Get assets and locations for a CityIQ system</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">usage: ciq_nodes [-h] [--version] [-v] [-vv] [-C CONFIG] [-F]</span>
-<span class="go">                 [-M ASSET_MAP_CSV | -A ASSETS_CSV | -L LOCATIONS_CSV | --assets | --nodes | --cameras | --env_sensors | --em_sensors  | --mics | --locations | --walkways | --traffic_lanes | --parking_zones]</span>
+<p>Getting events is a two step process, and can be done with either the CLI programs
+or the Python API. To get events with the CLI, fors download them to the cache.
+The cache location is defined in the configuration file, and should have at least
+100GB of free space.</p>
+<p>First, download and cache the events. The download will run for all of the
+assets that have the given event, over the whole time range. On the San Diego system,
+time ranges longer than a few months can take days to download.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ciq_events -e BICYCLE -s <span class="m">2020</span>-01-01 -f <span class="m">2020</span>-02-01
 </pre></div>
 </div>
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-h">
-<span id="cmdoption-ciq_nodes-help"></span><code class="sig-name descname">-h</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--help</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-h" title="Permalink to this definition">¶</a></dt>
-<dd><p>show this help message and exit</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-version">
-<code class="sig-name descname">--version</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-version" title="Permalink to this definition">¶</a></dt>
-<dd><p>show program’s version number and exit</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-v">
-<span id="cmdoption-ciq_nodes-verbose"></span><code class="sig-name descname">-v</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--verbose</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-v" title="Permalink to this definition">¶</a></dt>
-<dd><p>set loglevel to INFO</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-vv">
-<span id="cmdoption-ciq_nodes-very-verbose"></span><code class="sig-name descname">-vv</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--very-verbose</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-vv" title="Permalink to this definition">¶</a></dt>
-<dd><p>set loglevel to DEBUG</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-C">
-<span id="cmdoption-ciq_nodes-config"></span><code class="sig-name descname">-C</code><code class="sig-prename descclassname"> &lt;config&gt;</code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--config</code><code class="sig-prename descclassname"> &lt;config&gt;</code><a class="headerlink" href="#cmdoption-ciq_nodes-C" title="Permalink to this definition">¶</a></dt>
-<dd><p>Path to configuration file</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-F">
-<span id="cmdoption-ciq_nodes-no-cache"></span><code class="sig-name descname">-F</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--no-cache</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-F" title="Permalink to this definition">¶</a></dt>
-<dd><p>Don’t use cached metadata; force a request to the API</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-M">
-<span id="cmdoption-ciq_nodes-asset-map-csv"></span><code class="sig-name descname">-M</code><code class="sig-prename descclassname"> &lt;asset_map_csv&gt;</code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--asset-map-csv</code><code class="sig-prename descclassname"> &lt;asset_map_csv&gt;</code><a class="headerlink" href="#cmdoption-ciq_nodes-M" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write a CSV file that maps assets to locations</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-A">
-<span id="cmdoption-ciq_nodes-assets-csv"></span><code class="sig-name descname">-A</code><code class="sig-prename descclassname"> &lt;assets_csv&gt;</code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--assets-csv</code><code class="sig-prename descclassname"> &lt;assets_csv&gt;</code><a class="headerlink" href="#cmdoption-ciq_nodes-A" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write all assets assets to a CSV file.</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-L">
-<span id="cmdoption-ciq_nodes-locations-csv"></span><code class="sig-name descname">-L</code><code class="sig-prename descclassname"> &lt;locations_csv&gt;</code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--locations-csv</code><code class="sig-prename descclassname"> &lt;locations_csv&gt;</code><a class="headerlink" href="#cmdoption-ciq_nodes-L" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write all assets assets to a CSV file.</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-assets">
-<code class="sig-name descname">--assets</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-assets" title="Permalink to this definition">¶</a></dt>
-<dd><p>Print all assets as JSON lines</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-nodes">
-<code class="sig-name descname">--nodes</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-nodes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Print all nodes as JSON lines</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-cameras">
-<code class="sig-name descname">--cameras</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-cameras" title="Permalink to this definition">¶</a></dt>
-<dd><p>Print all cameras as JSON lines</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-env_sensors">
-<code class="sig-name descname">--env_sensors</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-env_sensors" title="Permalink to this definition">¶</a></dt>
-<dd><p>Print all env_sensors as JSON lines</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-em_sensors">
-<code class="sig-name descname">--em_sensors</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-em_sensors" title="Permalink to this definition">¶</a></dt>
-<dd><p>Print all em_sensors  as JSON lines</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-mics">
-<code class="sig-name descname">--mics</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-mics" title="Permalink to this definition">¶</a></dt>
-<dd><p>Print all mics as JSON lines</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-locations">
-<code class="sig-name descname">--locations</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-locations" title="Permalink to this definition">¶</a></dt>
-<dd><p>Print all locations as JSON lines</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-walkways">
-<code class="sig-name descname">--walkways</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-walkways" title="Permalink to this definition">¶</a></dt>
-<dd><p>Print all walkways as JSON lines</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-traffic_lanes">
-<code class="sig-name descname">--traffic_lanes</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-traffic_lanes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Print all traffic_lanes as JSON lines</p>
-</dd></dl>
-
-<dl class="std option">
-<dt id="cmdoption-ciq_nodes-parking_zones">
-<code class="sig-name descname">--parking_zones</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-ciq_nodes-parking_zones" title="Permalink to this definition">¶</a></dt>
-<dd><p>Print all parking_zones as JSON lines</p>
-</dd></dl>
-
-</div>
-</div>
-</div>
-<div class="section" id="basic-api-use">
-<h2>Basic API Use<a class="headerlink" href="#basic-api-use" title="Permalink to this headline">¶</a></h2>
-<p>API objects are the primary way to get access to assets and events. <a class="reference internal" href="api/cityiq.html#cityiq.api.CityIq" title="cityiq.api.CityIq"><code class="xref py py-class docutils literal notranslate"><span class="pre">CityIq</span></code></a> is the top level access
-object. The API offers access to Locations, Events and Events.</p>
-<p>Typically, you will construct <a class="reference internal" href="api/cityiq.html#cityiq.api.CityIq" title="cityiq.api.CityIq"><code class="xref py py-class docutils literal notranslate"><span class="pre">CityIq</span></code></a> from a <code class="xref py py-class docutils literal notranslate"><span class="pre">Config</span></code>. If a configuration is not specific,
-the system will look for the file in default locations. You can also override individual configuration parameters
-with keyword arguments to the constructor.</p>
-<div class="section" id="metadata-access">
-<h3>Metadata Access<a class="headerlink" href="#metadata-access" title="Permalink to this headline">¶</a></h3>
-<p>Metadata, for both locations and assets, can be fetched with property accessors. The bounding box for the queries can
-be set in the configuration, or on the  <a class="reference internal" href="api/cityiq.html#cityiq.api.CityIq" title="cityiq.api.CityIq"><code class="xref py py-class docutils literal notranslate"><span class="pre">CityIq</span></code></a> constructor.</p>
-<p>The asset metadata properties are:</p>
-<ul class="simple">
-<li><p><a class="reference internal" href="api/cityiq.html#cityiq.api.CityIq.assets" title="cityiq.api.CityIq.assets"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CityIq.assets</span></code></a> : All assets</p></li>
-<li><p><a class="reference internal" href="api/cityiq.html#cityiq.api.CityIq.nodes" title="cityiq.api.CityIq.nodes"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CityIq.nodes</span></code></a> : Nodes, the parents for other assets on a pole</p></li>
-<li><p><a class="reference internal" href="api/cityiq.html#cityiq.api.CityIq.cameras" title="cityiq.api.CityIq.cameras"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CityIq.cameras</span></code></a> : All assets</p></li>
-<li><p><a class="reference internal" href="api/cityiq.html#cityiq.api.CityIq.em_sensors" title="cityiq.api.CityIq.em_sensors"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CityIq.em_sensors</span></code></a> : ?</p></li>
-<li><p><a class="reference internal" href="api/cityiq.html#cityiq.api.CityIq.env_sensors" title="cityiq.api.CityIq.env_sensors"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CityIq.env_sensors</span></code></a> : Environmental sensors</p></li>
-</ul>
-<p>The location metadata properties are:</p>
-<ul class="simple">
-<li><p><a class="reference internal" href="api/cityiq.html#cityiq.api.CityIq.locations" title="cityiq.api.CityIq.locations"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CityIq.locations</span></code></a> : All locations</p></li>
-<li><p><a class="reference internal" href="api/cityiq.html#cityiq.api.CityIq.walkways" title="cityiq.api.CityIq.walkways"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CityIq.walkways</span></code></a> :</p></li>
-<li><p><a class="reference internal" href="api/cityiq.html#cityiq.api.CityIq.parking_zones" title="cityiq.api.CityIq.parking_zones"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CityIq.parking_zones</span></code></a> :</p></li>
-<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">CityIq.traffic_lane</span></code> :</p></li>
-</ul>
-<p>Events can be fetched with <code class="xref py py-func docutils literal notranslate"><span class="pre">cityiq.api.CityIq.events()</span></code></p>
-<p>Each of these acessor properties or functions returns a generator that generates objects of a specific type,
-one base class for each of Locations, Assets or Events:</p>
-<ul class="simple">
-<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Asset</span></code></p></li>
-<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Location</span></code></p></li>
-<li><p><a class="reference internal" href="api/cityiq.html#cityiq.api.Event" title="cityiq.api.Event"><code class="xref py py-class docutils literal notranslate"><span class="pre">Event</span></code></a></p></li>
-</ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">bbox</span> <span class="o">=</span> <span class="s1">&#39;32.718987:-117.174244,32.707356:-117.154850&#39;</span>
-
-<span class="n">c</span> <span class="o">=</span> <span class="n">CityIq</span><span class="p">(</span><span class="n">bbox</span><span class="o">=</span><span class="n">bbox</span><span class="p">)</span> <span class="c1"># Use default config, override bbox</span>
-
-<span class="c1"># Get Locations</span>
-<span class="n">locations</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">locations</span><span class="p">)</span>
-
-<span class="c1"># Get the assets at this location:</span>
-<span class="k">for</span> <span class="n">location</span> <span class="ow">in</span> <span class="n">locations</span><span class="p">:</span>
-    <span class="n">do_something_with</span><span class="p">(</span><span class="n">location</span><span class="o">.</span><span class="n">assets</span>
+<p>The downloaded data is stored in the cache as CSV files, which you can load directly
+in which pandas or dask, or convert to one CSV file per asset:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ciq_events -e BICYCLE -s <span class="m">2020</span>-01-01 -f <span class="m">2020</span>-02-01
 </pre></div>
 </div>
+<p>You can combine them into a single file with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cat  <span class="k">$(</span>ls -1 <span class="p">|</span> head -1<span class="k">)</span> <span class="p">|</span> head -n1 &gt; combined.csv
+<span class="k">for</span> f in *.csv<span class="p">;</span> <span class="k">do</span> cat <span class="s2">&quot;`pwd`/</span><span class="nv">$f</span><span class="s2">&quot;</span> <span class="p">|</span> tail -n +2 &gt;&gt; combined.csv<span class="p">;</span> <span class="k">done</span>
+</pre></div>
 </div>
 </div>
 <div class="section" id="contents">
 <h2>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
-<li class="toctree-l1"><a class="reference internal" href="authors.html">Authors</a></li>
-<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="changelog.html#version-0-0-3">Version 0.0.3</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="api/modules.html">Module Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/cityiq.html">cityiq package</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="config.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Using the CLI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Using the API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/modules.html">Module Reference</a></li>
 </ul>
 </div>
 </div>
@@ -369,9 +123,9 @@ one base class for each of Locations, Assets or Events:</p>
 
 <h3>Navigation</h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
-<li class="toctree-l1"><a class="reference internal" href="authors.html">Authors</a></li>
-<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="config.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Using the CLI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Using the API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/modules.html">Module Reference</a></li>
 </ul>
 
@@ -379,7 +133,7 @@ one base class for each of Locations, Assets or Events:</p>
 <h3>Related Topics</h3>
 <ul>
   <li><a href="#">Documentation overview</a><ul>
-      <li>Next: <a href="license.html" title="next chapter">License</a></li>
+      <li>Next: <a href="config.html" title="next chapter">Configuration</a></li>
   </ul></li>
 </ul>
 </div>

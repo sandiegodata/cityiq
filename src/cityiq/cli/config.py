@@ -46,6 +46,8 @@ def make_parser():
 
     return parser
 
+parser = make_parser()
+
 def main(args):
     """Main entry point allowing external calls
 
@@ -55,7 +57,7 @@ def main(args):
 
     from cityiq import Config
 
-    parser = make_parser()
+
 
     args =  parser.parse_args(args)
 

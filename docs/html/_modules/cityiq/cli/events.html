@@ -4,7 +4,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>cityiq.cli.events &#8212; cityiq 0.0.13.post0.dev2+gd82a06d.dirty documentation</title>
+    <title>cityiq.cli.events &#8212; cityiq 0.1.1.post0.dev1+g5ce21ea.dirty documentation</title>
     <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
@@ -42,7 +42,7 @@
 <span class="kn">import</span> <span class="nn">sys</span>
 
 <span class="kn">from</span> <span class="nn">cityiq</span> <span class="k">import</span> <span class="n">__version__</span><span class="p">,</span> <span class="n">CityIqError</span>
-<span class="kn">from</span> <span class="nn">cityiq.task</span> <span class="k">import</span> <span class="n">DownloadDataframeTask</span><span class="p">,</span> <span class="n">DownloadTask</span>
+<span class="kn">from</span> <span class="nn">cityiq.task</span> <span class="k">import</span> <span class="n">DownloadTask</span>
 <span class="kn">from</span> <span class="nn">cityiq.util</span> <span class="k">import</span> <span class="n">event_type_to_location_type</span>
 <span class="kn">from</span> <span class="nn">progress.bar</span> <span class="k">import</span> <span class="n">ShadyBar</span> <span class="k">as</span> <span class="n">Bar</span>
 
@@ -106,11 +106,19 @@
 
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-c&#39;</span><span class="p">,</span> <span class="s1">&#39;--config&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Path to configuration file&#39;</span><span class="p">)</span>
 
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-w&#39;</span><span class="p">,</span> <span class="s1">&#39;--workers&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Number of threads to use&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-s&#39;</span><span class="p">,</span> <span class="s1">&#39;--start-time&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Starting time, in iso format. If not specified, use the &#39;</span>
                                                     <span class="s2">&quot;configuration value &#39;start_time&#39; &quot;</span><span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-e&#39;</span><span class="p">,</span> <span class="s1">&#39;--end-time&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Ending time, in iso format. If not specified, end time is yesterday &#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-f&#39;</span><span class="p">,</span> <span class="s1">&#39;--end-time&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Ending time, in iso format. If not specified, end time is yesterday &#39;</span><span class="p">)</span>
 
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;events&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Names of events to scrape. One or more of: &#39;</span><span class="o">+</span><span class="n">ve_string</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-e&#39;</span><span class="p">,</span> <span class="s1">&#39;--events&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Names of events to scrape. One or more of: &#39;</span><span class="o">+</span><span class="n">ve_string</span><span class="p">)</span>
+
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-o&#39;</span><span class="p">,</span><span class="s1">&#39;--output-name&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Output file, where events are written in CSV format&#39;</span><span class="p">)</span>
+
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-O&#39;</span><span class="p">,</span> <span class="s1">&#39;--output&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Coalesce data into one CSV file per asset&#39;</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">parser</span></div>
 
@@ -172,7 +180,6 @@
 
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Using config:&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">_config_file</span><span class="p">)</span>
 
-
     <span class="n">events</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">events</span><span class="p">]</span>
 
     <span class="k">try</span><span class="p">:</span>
@@ -183,21 +190,56 @@
 
     <span class="n">c</span> <span class="o">=</span> <span class="n">CityIq</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 
+    <span class="n">end_time</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">convert_time</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">end_time</span><span class="p">)</span>
+    <span class="n">start_time</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">convert_time</span><span class="p">(</span><span class="n">start_time_str</span><span class="p">)</span>
+
     <span class="n">assets</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">assets_by_event</span><span class="p">(</span><span class="n">events</span><span class="p">))</span>  <span class="c1"># Get all assets that have the Bicycle event</span>
 
     <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;{len(assets)} assets&quot;</span><span class="p">)</span>
 
-    <span class="n">tasks</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">make_tasks</span><span class="p">(</span><span class="n">DownloadTask</span><span class="p">,</span> <span class="n">assets</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span>  <span class="n">start_time_str</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">end_time</span><span class="p">)</span>
-
-    <span class="k">with</span> <span class="n">ProgressBar</span><span class="p">(</span><span class="s1">&#39;Downloading&#39;</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">),</span>
-                     <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(index)d</span><span class="s1"> of </span><span class="si">%(max)d</span><span class="s1">  (</span><span class="si">%(percent).1f%%</span><span class="s1">) </span><span class="si">%(extant)d</span><span class="s1"> extant </span><span class="si">%(downloaded)d</span><span class="s1"> downloaded - ETA </span><span class="si">%(eta_td)s</span><span class="s1">&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">bar</span><span class="p">:</span>
-
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">run_async</span><span class="p">(</span><span class="n">tasks</span><span class="p">)):</span>
-            <span class="n">bar</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
-            <span class="n">bar</span><span class="o">.</span><span class="n">update_task</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+    <span class="n">tasks</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">make_tasks</span><span class="p">(</span><span class="n">assets</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span>  <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">)</span>
 
 
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="p">:</span>
 
+        <span class="k">with</span> <span class="n">ProgressBar</span><span class="p">(</span><span class="s1">&#39;Downloading&#39;</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">),</span>
+                         <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(index)d</span><span class="s1"> of </span><span class="si">%(max)d</span><span class="s1">  (</span><span class="si">%(percent).1f%%</span><span class="s1">) - ETA </span><span class="si">%(eta_td)s</span><span class="s1">&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">bar</span><span class="p">:</span>
+            <span class="c1"># suffix=&#39;%(index)d of %(max)d  (%(percent).1f%%) %(extant)d extant %(downloaded)d downloaded - ETA %(eta_td)s&#39;) as bar:</span>
+
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">run_async</span><span class="p">(</span><span class="n">tasks</span><span class="p">)):</span>
+                <span class="n">bar</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+                <span class="n">bar</span><span class="o">.</span><span class="n">update_task</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+        <span class="kn">from</span> <span class="nn">tqdm</span> <span class="k">import</span> <span class="n">tqdm</span>
+        <span class="kn">from</span> <span class="nn">pathlib</span> <span class="k">import</span> <span class="n">Path</span>
+
+        <span class="n">event_name</span> <span class="o">=</span> <span class="s1">&#39;-&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">events</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">assets</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Assets&#39;</span><span class="p">):</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">f</span><span class="s2">&quot;</span><span class="si">{event_name}</span><span class="s2">_{start_time.date().isoformat()}_{end_time.date().isoformat()}/</span><span class="si">{a.uid}</span><span class="s2">.csv&quot;</span>
+
+            <span class="n">files</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">get_cache_files</span><span class="p">([</span><span class="n">a</span><span class="p">],</span> <span class="n">events</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">))</span>
+
+            <span class="n">frames</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Frames&quot;</span><span class="p">,</span> <span class="n">leave</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+                <span class="n">frames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">frames</span><span class="p">:</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">frames</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="c1">#    df[&#39;timestamp&#39;] = pd.to_datetime(df.timestamp)</span>
+
+                <span class="n">p</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                    <span class="n">p</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">()</span>
+
+                <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+
+
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Done&quot;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="run"><a class="viewcode-back" href="../../../api/cityiq.cli.html#cityiq.cli.events.run">[docs]</a><span class="k">def</span> <span class="nf">run</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;Entry point for console_scripts</span>
@@ -226,9 +268,9 @@
 
 <h3>Navigation</h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../authors.html">Authors</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../config.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cli.html">Using the CLI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">Using the API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">Module Reference</a></li>
 </ul>
 
