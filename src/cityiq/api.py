@@ -6,7 +6,6 @@
 
 """
 
-import datetime
 import json
 import logging
 import pickle
@@ -16,15 +15,15 @@ from time import time
 
 import pytz
 import requests
-from cityiq.util import event_to_zone
 from dateutil.parser import parse
 from requests import HTTPError
 from slugify import slugify
 
-from .config import Config
-from .exceptions import ConfigurationError, TimeError, CityIqError
-from .util import json_serial
+from cityiq.util import event_to_zone
 
+from .config import Config
+from .exceptions import CityIqError, ConfigurationError, TimeError
+from .util import json_serial
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +69,6 @@ class CityIqObject(object):
             else:
                 return Polygon(vertices)
 
-
     @property
     def events_url(self):
         """Return the URL for fetching events, called from get_events() in the base class. """
@@ -86,8 +84,7 @@ class CityIqObject(object):
 
     def get_events(self, event_type, start_time, end_time=None):
 
-        return self.client.get_events(self,event_type, start_time, end_time)
-
+        return self.client.get_events(self, event_type, start_time, end_time)
 
     def __str__(self):
         return "<{}: {}>".format(type(self).__name__, self.data)
@@ -99,14 +96,14 @@ def to_date(t):
     except AttributeError:
         return t
 
+
 class CacheFile(object):
     """Represents a cached file of records for one location or asset, one type of event,
     and one day. Or, if the date and event type are omitted, just the information
     about an asset or location"""
 
-
-
-    def __init__(self, cache_path, access_object, fetch_func=None, event_type=None, dt=None, end_time=None, group=None, format='json'):
+    def __init__(self, cache_path, access_object, fetch_func=None, event_type=None, dt=None, end_time=None, group=None,
+                 format='json'):
         """
 
         :param cache_path: Path to the base object cache
@@ -133,9 +130,12 @@ class CacheFile(object):
 
         self.path  # Just check that it's ok
 
-        self.today = to_date(self._access_object.client.convert_time('now').replace(hour=0, minute=0, second=0, microsecond=0))
+        self.today = to_date(
+            self._access_object.client.convert_time('now').replace(hour=0,
+                                                                   minute=0, second=0, microsecond=0))
 
-        self._write = self._dt is None or self._end_time is not None or self._dt < self.today  # Don't write cache for today on day cache files.
+        # Don't write cache for today on day cache files.
+        self._write = self._dt is None or self._end_time is not None or self._dt < self.today
 
     def run(self):
 
@@ -148,13 +148,11 @@ class CacheFile(object):
             self.write(v)
             return v
 
-
     @classmethod
     def object_prefix(cls, obj, event_type):
 
         uid = obj.uid
         prefix = uid[:2] if uid else 'none'
-
 
         return f'{obj.object_sub_dir}/{prefix}/{uid}/{event_type}/'
 
@@ -171,8 +169,8 @@ class CacheFile(object):
         if self._dt is not None and self._event_type is not None and self._group is None:
 
             return self._cache_path.joinpath(
-                Path( self.object_prefix(ao, self._event_type) +
-                    f'{self._dt.isoformat()}.{self._format}'))
+                Path(self.object_prefix(ao, self._event_type) +
+                     f'{self._dt.isoformat()}.{self._format}'))
 
         elif self._dt is None and self._event_type is None:
 
@@ -253,7 +251,6 @@ class CityIq(object):
 
         self.cache_metadata = cache_metadata
 
-
         self.metadata_cache = Path(self.config.cache_meta)
 
         self.metadata_cache.mkdir(exist_ok=True, parents=True)
@@ -305,7 +302,6 @@ class CityIq(object):
     def convert_time(self, t):
         """Convert a variety of time formats into the millisecond format
         used by the CityIQ interface. Converts naieve times to the configured timezone"""
-
 
         now = datetime.now()
 
@@ -535,7 +531,8 @@ class CityIq(object):
     def get_asset(self, asset_uid, use_cache=True):
         from cityiq.asset import Asset
 
-        ff = lambda: self.http_get(self.config.metadata_url + self.asset_url_suffix.format(uid=asset_uid)).json()
+        def ff():
+            self.http_get(self.config.metadata_url + self.asset_url_suffix.format(uid=asset_uid)).json()
 
         cf = CacheFile(self.config.cache_objects, Asset(self, asset_uid), fetch_func=ff)
 
@@ -545,7 +542,6 @@ class CityIq(object):
     def assets(self):
         """Return all system assets"""
         return self.get_assets(' ')
-
 
     @property
     def nodes(self):
@@ -613,9 +609,9 @@ class CityIq(object):
             r = self.http_get(url)
             return r.json()
 
-        l = Location(self, location_uid)
+        loc = Location(self, location_uid)
 
-        cf = CacheFile(self.config.cache_objects, l, fetch_func=ff)
+        cf = CacheFile(self.config.cache_objects, loc, fetch_func=ff)
 
         return self._new_location(cf.run())
 
@@ -632,21 +628,21 @@ class CityIq(object):
 
     @property
     def walkways(self):
-        for l in self.locations:
-            if l.locationType == 'WALKWAY':
-                yield l
+        for loc in self.locations:
+            if loc.locationType == 'WALKWAY':
+                yield loc
 
     @property
     def traffic_lanes(self):
-        for l in self.locations:
-            if l.locationType == 'TRAFFIC_LANE':
-                yield l
+        for loc in self.locations:
+            if loc.locationType == 'TRAFFIC_LANE':
+                yield loc
 
     @property
     def parking_zones(self):
-        for l in self.locations:
-            if l.locationType == 'PARKING_ZONE':
-                yield l
+        for loc in self.locations:
+            if loc.locationType == 'PARKING_ZONE':
+                yield loc
 
     def locations_by_event(self, event_types):
 
@@ -692,7 +688,6 @@ class CityIq(object):
         event returned is not the last in the date range. """
 
         page = 0
-        records = []
 
         while True:
 
@@ -736,7 +731,6 @@ class CityIq(object):
                 yield f
 
     def get_cache_files(self, objects, event_types, start_time, end_time):
-        from collections import Sequence
 
         if isinstance(event_types, str):
             event_types = [event_types]
@@ -747,7 +741,6 @@ class CityIq(object):
         for obj in objects:
             for et in event_types:
                 yield from self._event_cache_files(obj, et, start_time, end_time)
-
 
     def _event_cache_file_times(self, obj, event_type, start_time, end_time):
         """Return the datetimes for the cached files for this object and event type"""
@@ -797,8 +790,7 @@ class CityIq(object):
                 logger.debug(f"Write empty file: {cf.path}")
                 cf.write(pd.DataFrame())
 
-
-    def _clean_cache(self,  obj, event_type, start_time, end_time):
+    def _clean_cache(self, obj, event_type, start_time, end_time):
 
         for f in self._event_cache_files(obj, event_type, start_time, end_time):
             f = Path(f)
@@ -834,8 +826,6 @@ class CityIq(object):
             return df
         else:
             return pd.DataFrame()
-
-
 
     def make_tasks(self, objects, events, start_time, end_time, task_class=None):
         """Fetch, and cache, events requests for a set of assets or locations """
