@@ -63,6 +63,14 @@ in which pandas or dask, or convert to one CSV file per asset:
 
     ciq_events -e BICYCLE -s 2020-01-01 -f 2020-02-01
 
+Detailed Examples and Documentation
+===================================
+
+See more examples for using the CLI progras and API:
+
+    * [In this Jupyter notebook](https://github.com/sandiegodata/cityiq/blob/master/notebooks/Basic%20Use.ipynb)
+    * [In the documentation](https://sandiegodata.github.io/cityiq/)
+
 
 Devlopment
 ==========
