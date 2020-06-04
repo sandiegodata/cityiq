@@ -5,14 +5,15 @@
 """
 
 import argparse
+import csv
+import json
 import logging
 import sys
 
-from cityiq import __version__
-import csv
+import pandas as pd
 import tqdm
 
-import pandas as pd
+from cityiq import __version__
 
 try:
     from pandas import json_normalize
@@ -43,17 +44,21 @@ def make_parser():
 
     parser.add_argument('-C', '--config', help='Path to configuration file')
 
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('-c', '--csv', action='store_const', dest='format', const='csv', help='Write output as CSV.')
+    group.add_argument('-j', '--json', action='store_const', dest='format', const='json',help='Write output as JSON.')
+    group.add_argument('-l', '--jsonl', action='store_const',dest='format', const='jsonl', help='Write output as JSON lines.')
+
+    parser.add_argument('-o', '--output',nargs='?', type=argparse.FileType('w'),
+                       default=sys.stdout,
+                        help='Output file name. If not specified, write to stdout, except for -M, which is always writen to a file. ')
+
     parser.add_argument('-F', '--no-cache', help="Don't use cached metadata; force a request to the API",
                        action="store_true")
 
     group = parser.add_mutually_exclusive_group()
 
     group.add_argument('-M', '--asset-map-csv', help='Write a CSV file that maps assets to locations ')
-
-    group.add_argument('-A', '--assets-csv', help='Write all assets assets to a CSV file. ')
-
-    group.add_argument('-L', '--locations-csv', help='Write all assets assets to a CSV file. ')
-
 
     for a in acessors:
         group.add_argument(f'--{a}', help=f'Print all {a} as JSON lines', action="store_true")
@@ -90,7 +95,6 @@ def main(args):
 
     if args.config:
         config = Config(args.config)
-
     else:
         config = Config()
 
@@ -99,29 +103,37 @@ def main(args):
 
     c = CityIq(config, cache_metadata= not args.no_cache)
 
+    node_type = [ a for a in acessors if getattr(args, a) == True]
+    if node_type:
+        node_type = node_type[0]
+    else:
+        node_type = None
+
     try:
         if args.asset_map_csv:
             print("Building asset to locations map. This is really slow.")
             with open(args.asset_map_csv, 'w') as f, tqdm.tqdm() as p:
                 w = csv.writer(f)
-                w.writerow('assetUid parentAssetUid assetType locationUid parentLocationUid locationType'.split())
+                w.writerow('assetUid parentAssetUid assetType locationUid parentLocationUid locationType geometry'.split())
 
                 for a in c.assets:
                     for l in a.locations:
-                        w.writerow([a.assetUid, a.parentAssetUid, a.assetType, l.locationUid, l.parentLocationUid, l.locationType])
+                        w.writerow([a.assetUid, a.parentAssetUid, a.assetType, l.locationUid,
+                                    l.parentLocationUid, l.locationType, l.geometry.wkt])
                         p.update(1)
-        elif args.assets_csv:
-            df = json_normalize(a.data for a in c.assets)
-            df.to_csv(args.assets_csv)
-        elif args.locations_csv:
-            df = json_normalize(a.data for a in c.locations)
-            df.to_csv(args.locations_csv)
-        else:
-            for a in acessors:
-                if getattr(args, a) == True:
-                    for l in getattr(c, a):
-                        print(l)
+        elif node_type:
+            nodes = []
+            for n in getattr(c, node_type):
+                nodes.append(n)
 
+            if args.format=='csv':
+                df = json_normalize(a.as_dict(wkt=True) for a in c.assets)
+                df.to_csv(args.output)
+            elif args.format=='json':
+                json.dump([n.as_dict(wkt=True) for n in nodes],args.output)
+            elif args.format == 'jsonl':
+                for n in nodes:
+                    print(json.dumps(n.as_dict(wkt=True)), file=args.output)
 
     except AuthenticationError:
         print("ERROR: Authentication failed. Check your username and password, or the authentication UAA url")
@@ -130,8 +142,6 @@ def main(args):
         print(e)
         print("ERROR: writing a CSV requires Pandas and Shapley: pip|conda install pandas shapley")
         sys.exit(1)
-
-
 
 def run():
     """Entry point for console_scripts

@@ -8,10 +8,11 @@ import argparse
 import logging
 import sys
 
-from cityiq import __version__, CityIqError
+from progress.bar import ShadyBar as Bar
+
+from cityiq import CityIqError, __version__
 from cityiq.task import DownloadTask
 from cityiq.util import event_type_to_location_type
-from progress.bar import ShadyBar as Bar
 
 __author__ = "Eric Busboom"
 __copyright__ = "Eric Busboom"
@@ -70,6 +71,9 @@ def make_parser():
 
     parser.add_argument('-vv', '--very-verbose', dest="loglevel", help="set loglevel to DEBUG", action='store_const',
                         const=logging.DEBUG)
+
+    parser.add_argument('-a', '--assets',
+                        help="Path to a CSV file of assets, of the form produced by the 'ciq_nodes' program.")
 
     parser.add_argument('-c', '--config', help='Path to configuration file')
 
@@ -162,7 +166,14 @@ def _main(args):
 
     assets = list(c.assets_by_event(events))  # Get all assets that have the Bicycle event
 
-    print(f"{len(assets)} assets")
+    if args.assets:
+        from csv import DictReader
+        asset_map = {a.uid: a for a in assets }
+
+        with open(args.assets) as f:
+            assets = [asset_map.get(row['assetUid']) for row in DictReader(f) if row['assetUid'] in asset_map]
+
+    print(f"Using {len(assets)} assets")
 
     tasks = c.make_tasks(assets, events,  start_time, end_time)
 
@@ -201,10 +212,7 @@ def _main(args):
                 if not p.parent.exists():
                     p.parent.mkdir()
 
-                df.to_csv(name)
-
-
-
+                df.to_csv(name, index=False)
 
     print("Done")
 

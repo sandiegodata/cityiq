@@ -89,6 +89,21 @@ class CityIqObject(object):
     def __str__(self):
         return "<{}: {}>".format(type(self).__name__, self.data)
 
+    def as_dict(self, wkt=False):
+
+        from copy import copy
+
+        d = copy(self.data)
+        if wkt:
+            d['geometry'] = self.geometry.wkt
+        else:
+
+            d['geometry'] = self.geometry
+
+        od = { k: d[k] for k in sorted(d.keys())}
+
+        return od
+
 
 def to_date(t):
     try:
@@ -532,7 +547,7 @@ class CityIq(object):
         from cityiq.asset import Asset
 
         def ff():
-            self.http_get(self.config.metadata_url + self.asset_url_suffix.format(uid=asset_uid)).json()
+            return self.http_get(self.config.metadata_url + self.asset_url_suffix.format(uid=asset_uid)).json()
 
         cf = CacheFile(self.config.cache_objects, Asset(self, asset_uid), fetch_func=ff)
 
@@ -735,7 +750,7 @@ class CityIq(object):
         if isinstance(event_types, str):
             event_types = [event_types]
 
-        if isinstance(event_types, CityIqObject):
+        if isinstance(objects, CityIqObject):
             objects = [objects]
 
         for obj in objects:
@@ -822,6 +837,10 @@ class CityIq(object):
 
         if frames:
             df = pd.concat(frames, sort=False)
+        else:
+            df = []
+
+        if len(df):
             df['timestamp'] = pd.to_datetime(df.timestamp)
             return df
         else:
