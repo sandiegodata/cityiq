@@ -61,8 +61,7 @@ def main(args):
 
     args =  parser.parse_args(args)
 
-    config = Config()
-
+   
     if args.write:
         p = Path(__file__).parent.joinpath('default-config.yaml')
 
@@ -88,6 +87,7 @@ def main(args):
 
     elif args.print:
         import yaml
+        config = Config()
         if not config.client_id:
             print("ERROR: Did not get valid config file. Use --config option or CITYIQ_CONFIG env var")
         else:
